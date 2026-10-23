@@ -1,6 +1,46 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 @theme {
+  /* Tokens extraídos do dashboard estático; valores originais preservados. */
+  --color-sidebar: #064e3b;
+  --color-background: #f8e7c9;
+  --color-card: #ffffff;
+  --color-action: #064e3b;
+  --color-critical: #b42318;
+  --color-critical-text: #97281c;
+  --color-critical-bg: #fbecea;
+  --color-critical-border: #efc4bd;
+  --color-high: #d18b12;
+  --color-high-text: #85500d;
+  --color-high-bg: #fdf3dc;
+  --color-high-border: #efd7a4;
+  --color-medium: #c9a227;
+  --color-medium-text: #7d5a12;
+  --color-success: #16876a;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+  --shadow-card: 0 1px 2px rgba(6,78,59,0.05);
+  --shadow-button: 0 1px 1px rgba(6,78,59,0.04);
+  --shadow-logo: 0 2px 8px rgba(0,0,0,0.18);
+  --text-ui-8-5: 8.5px;
+  --text-ui-9: 9px;
+  --text-ui-9-5: 9.5px;
+  --text-ui-10: 10px;
+  --text-ui-10-5: 10.5px;
+  --text-ui-11: 11px;
+  --text-ui-11-5: 11.5px;
+  --text-ui-12: 12px;
+  --text-ui-13: 13px;
+  --text-ui-14: 14px;
+  --text-ui-15: 15px;
+  --text-ui-22: 22px;
+  --text-ui-26: 26px;
+  --text-ui-28: 28px;
+
   /* Paleta principal do projeto: verde profundo + creme */
   --color-brand-950: #033327;
   --color-brand-900: #064e3b;
