@@ -316,3 +316,42 @@ export function TrendUpIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function MailIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3.6 6.4l7.3 5.6a2 2 0 0 0 2.2 0l7.3-5.6" />
+    </Icon>
+  );
+}
+
+export function LockIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" />
+      <path d="M12 14.5v2.5" />
+    </Icon>
+  );
+}
+
+export function EyeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" />
+      <circle cx="12" cy="12" r="2.75" />
+    </Icon>
+  );
+}
+
+export function EyeOffIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 4l16 16" />
+      <path d="M9.9 5.2A9.8 9.8 0 0 1 12 5c6 0 9.5 6 9.5 6a17 17 0 0 1-3.3 3.8" />
+      <path d="M6.3 7.4A16.5 16.5 0 0 0 2.5 12s3.5 6 9.5 6a9.7 9.7 0 0 0 4.4-1" />
+      <path d="M10.4 10.5a2.75 2.75 0 0 0 3.2 3.9" />
+    </Icon>
+  );
+}
