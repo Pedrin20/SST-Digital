@@ -87,7 +87,7 @@ export function LoginForm() {
         return;
       }
 
-      router.replace("/");
+      router.replace("/dashboard");
     } catch {
       setErro("Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.");
     } finally {

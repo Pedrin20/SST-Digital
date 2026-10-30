@@ -12,10 +12,11 @@ import {
 } from "./icons";
 
 const navigation = [
-  { label: "Dashboard Geral", href: "#dashboard", icon: DashboardIcon, active: true },
-  { label: "Inspeções & Auditorias", href: "#inspecoes", icon: InspectionIcon, badge: "8" },
-  { label: "Matriz de Riscos", href: "#matriz", icon: MatrixIcon, badge: "4" },
-  { label: "Planos de Ação", href: "#planos", icon: PlanIcon, badge: "12" },
+  { label: "Dashboard Geral", href: "/dashboard", icon: DashboardIcon },
+  { label: "Empresas", href: "/empresas", icon: ShieldCheckIcon },
+  { label: "Inspeções & Auditorias", href: "/dashboard#inspecoes", icon: InspectionIcon, badge: "8" },
+  { label: "Matriz de Riscos", href: "/dashboard#matriz", icon: MatrixIcon, badge: "4" },
+  { label: "Planos de Ação", href: "/dashboard#planos", icon: PlanIcon, badge: "12" },
   { label: "EPIs & Equipamentos", href: "#epis", icon: HelmetIcon },
   { label: "Documentos & NRs", href: "#documentos", icon: FileIcon },
   { label: "Configurações & Usuários", href: "#configuracoes", icon: SettingsIcon },
@@ -41,7 +42,7 @@ function BrandMark() {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ active = "Dashboard Geral" }: { active?: string }) {
   return (
     <>
       {/* Barra superior (mobile / tablet) */}
@@ -64,9 +65,9 @@ export function Sidebar() {
                 <li key={item.label}>
                   <a
                     href={item.href}
-                    aria-current={item.active ? "page" : undefined}
+                    aria-current={item.label === active ? "page" : undefined}
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
-                      item.active
+                      item.label === active
                         ? "bg-cream text-brand-900"
                         : "text-white/70 hover:bg-white/10 hover:text-white"
                     }`}
@@ -105,23 +106,23 @@ export function Sidebar() {
                 <li key={item.label}>
                   <a
                     href={item.href}
-                    aria-current={item.active ? "page" : undefined}
+                    aria-current={item.label === active ? "page" : undefined}
                     className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] transition-colors ${
-                      item.active
+                      item.label === active
                         ? "bg-cream font-semibold text-brand-900 shadow-sm"
                         : "text-white/70 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     <Icon
                       className={`h-[17px] w-[17px] shrink-0 ${
-                        item.active ? "text-brand-900" : "text-cream/60 group-hover:text-cream"
+                        item.label === active ? "text-brand-900" : "text-cream/60 group-hover:text-cream"
                       }`}
                     />
                     <span className="truncate">{item.label}</span>
                     {item.badge ? (
                       <span
                         className={`ml-auto rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                          item.active
+                          item.label === active
                             ? "bg-brand-900/10 text-brand-900"
                             : "bg-white/10 text-cream/80"
                         }`}
