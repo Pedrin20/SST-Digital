@@ -14,12 +14,13 @@ import {
 const navigation = [
   { label: "Dashboard Geral", href: "/dashboard", icon: DashboardIcon },
   { label: "Empresas", href: "/empresas", icon: ShieldCheckIcon },
+  { label: "Usuários", href: "/usuarios", icon: SettingsIcon },
   { label: "Inspeções & Auditorias", href: "/dashboard#inspecoes", icon: InspectionIcon, badge: "8" },
   { label: "Matriz de Riscos", href: "/dashboard#matriz", icon: MatrixIcon, badge: "4" },
   { label: "Planos de Ação", href: "/dashboard#planos", icon: PlanIcon, badge: "12" },
   { label: "EPIs & Equipamentos", href: "#epis", icon: HelmetIcon },
   { label: "Documentos & NRs", href: "#documentos", icon: FileIcon },
-  { label: "Configurações & Usuários", href: "#configuracoes", icon: SettingsIcon },
+  { label: "Configurações", href: "/dashboard#configuracoes", icon: SettingsIcon },
 ];
 
 function BrandMark() {

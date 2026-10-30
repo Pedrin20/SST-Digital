@@ -7,4 +7,4 @@ export function proxy(request: NextRequest) {
   return hasSession ? NextResponse.next() : NextResponse.redirect(new URL("/login", request.url));
 }
 
-export const config = { matcher: ["/dashboard/:path*", "/empresas/:path*"] };
+export const config = { matcher: ["/dashboard/:path*", "/empresas/:path*", "/usuarios/:path*"] };
