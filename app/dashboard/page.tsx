@@ -36,7 +36,7 @@ function QuickAction({
   return (
     <Button
       variant="secondary"
-      className={`inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 py-1.5 text-[11px] font-medium text-brand-900 shadow-[0_1px_1px_rgba(6,78,59,0.04)] transition-colors hover:border-brand-200 hover:bg-cream-50 ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 py-1.5 text-[11px] font-medium text-brand-900 shadow-[0_1px_1px_rgba(22,78,115,0.04)] transition-colors hover:border-brand-200 hover:bg-cream-50 ${className}`}
     >
       <Icon className="h-3.5 w-3.5 text-brand-700" />
       {children}
@@ -202,13 +202,13 @@ export default function DashboardPage() {
                 trend="up"
                 footer={
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded border border-[#efd7a4] bg-[#fdf3dc] px-1.5 py-0.5 text-[9.5px] font-semibold text-[#85500d]">
+                    <span className="rounded border border-high-border bg-high-bg px-1.5 py-0.5 text-[9.5px] font-semibold text-high-text">
                       3 altas
                     </span>
-                    <span className="rounded border border-cream-300 bg-cream-100 px-1.5 py-0.5 text-[9.5px] font-medium text-[#7d5a12]">
+                    <span className="rounded border border-cream-300 bg-cream-100 px-1.5 py-0.5 text-[9.5px] font-medium text-medium-text">
                       4 médias
                     </span>
-                    <span className="text-[9.5px] font-medium text-[#97281c]">2 em atraso</span>
+                    <span className="text-[9.5px] font-medium text-critical-text">2 em atraso</span>
                   </div>
                 }
               />
@@ -304,9 +304,9 @@ export default function DashboardPage() {
                         <div
                           className={`flex w-[74px] items-center gap-1 text-[10px] font-medium ${
                             risk.trend === "Alta"
-                              ? "text-[#97281c]"
+                              ? "text-critical-text"
                               : risk.trend === "Estável"
-                                ? "text-[#85500d]"
+                                ? "text-high-text"
                                 : "text-brand-700"
                           }`}
                         >
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                     style={{
                       background:
-                        "conic-gradient(#064E3B 0 83.8%, #F2E1C2 83.8% 100%)",
+                        "conic-gradient(var(--color-brand-900) 0 83.8%, var(--color-cream-200) 83.8% 100%)",
                     }}
                   >
                     <span className="flex h-6.5 w-6.5 items-center justify-center rounded-full bg-white text-[8.5px] font-bold text-brand-900">
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                     </p>
                     <p className="mt-0.5 text-[11.5px] font-semibold text-ink">
                       8,38 <span className="font-normal text-muted">/ 10</span>{" "}
-                      <span className="ml-1 text-[10px] font-medium text-[#97281c]">
+                      <span className="ml-1 text-[10px] font-medium text-critical-text">
                         Classificação: crítico
                       </span>
                     </p>
@@ -393,7 +393,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="mt-4 flex items-start gap-2.5 rounded-b-xl border-t border-cream-200 bg-cream-50 px-4 py-3.5 sm:px-5">
-                <LightbulbIcon className="mt-px h-4 w-4 shrink-0 text-[#85500d]" />
+                <LightbulbIcon className="mt-px h-4 w-4 shrink-0 text-high-text" />
                 <p className="text-[10px] leading-relaxed text-muted">
                   <span className="font-semibold text-ink">Recomendação:</span> reforçar a
                   inspeção semanal e a reciclagem de EPI no setor de Caldeiraria &amp; Soldagem.
@@ -428,3 +428,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

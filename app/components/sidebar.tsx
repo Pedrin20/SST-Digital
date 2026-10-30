@@ -14,6 +14,10 @@ import {
 const navigation = [
   { label: "Dashboard Geral", href: "/dashboard", icon: DashboardIcon },
   { label: "Empresas", href: "/empresas", icon: ShieldCheckIcon },
+  { label: "Unidades", href: "/unidades", icon: ShieldCheckIcon },
+  { label: "Setores", href: "/setores", icon: PlanIcon },
+  { label: "Perigos", href: "/perigos", icon: MatrixIcon },
+  { label: "Avaliações de risco", href: "/avaliacoes-risco", icon: MatrixIcon },
   { label: "Usuários", href: "/usuarios", icon: SettingsIcon },
   { label: "Inspeções & Auditorias", href: "/dashboard#inspecoes", icon: InspectionIcon, badge: "8" },
   { label: "Matriz de Riscos", href: "/dashboard#matriz", icon: MatrixIcon, badge: "4" },
@@ -170,3 +174,7 @@ export function Sidebar({ active = "Dashboard Geral" }: { active?: string }) {
     </>
   );
 }
+
+
+
+

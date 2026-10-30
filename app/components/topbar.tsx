@@ -56,7 +56,7 @@ export function Topbar() {
         <div className="ml-auto flex items-center gap-2">
           <a
             href="#nao-conformidades"
-            className="hidden items-center gap-1.5 rounded-full border border-[#efc4bd] bg-[#fbecea] px-3 py-1.5 text-[11px] font-medium whitespace-nowrap text-[#97281c] transition-colors hover:bg-[#f8e2de] sm:flex"
+            className="hidden items-center gap-1.5 rounded-full border border-critical-border bg-critical-bg px-3 py-1.5 text-[11px] font-medium whitespace-nowrap text-critical-text transition-colors hover:bg-critical-border sm:flex"
           >
             <AlertTriangleIcon className="h-3.5 w-3.5" />
             2 NCs críticas
@@ -76,7 +76,7 @@ export function Topbar() {
             aria-label="Notificações (3 não lidas)"
           >
             <BellIcon className="h-4 w-4" />
-            <span className="absolute top-2 right-2.5 h-1.5 w-1.5 rounded-full bg-[#b42318] ring-2 ring-white" />
+            <span className="absolute top-2 right-2.5 h-1.5 w-1.5 rounded-full bg-critical ring-2 ring-white" />
           </button>
 
           <button
@@ -112,3 +112,4 @@ export function Topbar() {
     </header>
   );
 }
+

@@ -4,7 +4,7 @@ import { ArrowDownRightIcon, ArrowUpRightIcon } from "@/app/components/icons";
 type Tone = "positive" | "negative" | "neutral";
 
 const deltaStyles: Record<Tone, string> = {
-  positive: "border-brand-100 bg-brand-50 text-brand-700",
+  positive: "border-success-border bg-success-bg text-success-text",
   negative: "border-critical-border bg-critical-bg text-critical-text",
   neutral: "border-line bg-cream-50 text-muted",
 };
@@ -70,4 +70,5 @@ export function KpiCard({
     </article>
   );
 }
+
 

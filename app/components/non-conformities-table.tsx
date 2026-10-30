@@ -42,7 +42,7 @@ const columns = [{ id: "col-0", header: "ID / Registro", sortValue: (nc: NonConf
                   <p
                     className={`flex items-center gap-1 text-[11px] font-medium ${
                       nc.overdue
-                        ? "text-[#97281c]"
+                        ? "text-critical-text"
                         : nc.status === "Concluída"
                           ? "text-brand-700"
                           : "text-ink"
@@ -61,7 +61,7 @@ const columns = [{ id: "col-0", header: "ID / Registro", sortValue: (nc: NonConf
                 </> },
 { id: "col-8", header: "Ação imediata",  cell: (nc: NonConformity) => <>
                   {nc.status === "Concluída" ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-2 py-1 text-[10.5px] font-semibold text-brand-700">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-success-bg px-2 py-1 text-[10.5px] font-semibold text-success-text">
                       <CheckIcon className="h-3 w-3" />
                       Finalizada
                     </span>
@@ -136,3 +136,4 @@ export function NonConformitiesTable() {
 
   return <Card id="nao-conformidades" className="scroll-mt-24 overflow-hidden"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-line p-5"><div><h2 className="text-[15px] font-semibold tracking-tight">Não Conformidades e Alertas Críticos Recentes</h2><p className="mt-0.5 text-[11.5px] text-muted">Registros que demandam intervenção imediata, com prazo de encerramento parcial.</p></div><div className="flex flex-wrap items-center gap-2"><Tabs label="Filtrar não conformidades" value={filter} onChange={id => setFilter(id as Filter)} items={filters.map(item => ({ id: item.id, label: item.label + " " + counts[item.id] }))} /><Button variant="secondary" onClick={exportCsv}><DownloadIcon className="h-3.5 w-3.5" />Exportar CSV</Button></div></div><DataTable key={filter} data={filtered} columns={columns} rowKey={nc => nc.id} caption="Não conformidades e alertas críticos recentes de SST" /><p className="px-4 pb-3 text-[10.5px] text-muted">{counts.overdue} com prazo vencido</p></Card>;
 }
+

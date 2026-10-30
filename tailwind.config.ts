@@ -6,7 +6,7 @@ export default {
   ],
   "theme": {
     "extend": {
-      "colors": {
+      "colors": { "accent": "var(--color-accent)", "on-action": "var(--color-on-action)", "success-text": "var(--color-success-text)", "success-bg": "var(--color-success-bg)", "success-border": "var(--color-success-border)", "medium-bg": "var(--color-medium-bg)", "medium-border": "var(--color-medium-border)",
         "sidebar": "var(--color-sidebar)",
         "background": "var(--color-background)",
         "card": "var(--color-card)",
@@ -87,3 +87,4 @@ export default {
     }
   }
 } satisfies Config;
+

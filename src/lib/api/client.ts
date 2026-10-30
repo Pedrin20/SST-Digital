@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ApiError } from "./error";
 import { contextHeaders, getApiContext, handleAccessError } from "./context";
 export { ApiError } from "./error";
-const errorBody = z.object({ erro: z.string().optional(), message: z.string().optional(), mensagem: z.string().optional(), fields: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(), detalhes: z.array(z.object({ path: z.array(z.union([z.string(), z.number()])).optional(), message: z.string() })).optional() });
+const errorBody = z.object({ erro: z.string().optional(), message: z.string().optional(), mensagem: z.string().optional(), fields: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(), detalhes: z.array(z.object({ path: z.array(z.union([z.string(), z.number()])).optional(), message: z.string().optional() }).passthrough()).optional() });
 /** accessErrors: false mantém erros de acesso para inspeção (ex.: 401 de credenciais no login). */
 export async function apiFetch<T>(path: string, schema: z.ZodType<T>, options: RequestInit = {}, config: { accessErrors?: boolean } = {}): Promise<T> {
   const base = process.env.API_BASE_URL;
@@ -23,10 +23,11 @@ export async function apiFetch<T>(path: string, schema: z.ZodType<T>, options: R
     const parsed = errorBody.safeParse(body); const data = parsed.success ? parsed.data : undefined;
     const fields: Record<string, string[]> = {};
     for (const [key, value] of Object.entries(data?.fields ?? {})) fields[key] = Array.isArray(value) ? value : [value];
-    for (const detalhe of data?.detalhes ?? []) { const key = String(detalhe.path?.[0] ?? "form"); (fields[key] ??= []).push(detalhe.message); }
+    for (const detalhe of data?.detalhes ?? []) { if (!detalhe.message) continue; const key = String(detalhe.path?.[0] ?? "form"); (fields[key] ??= []).push(detalhe.message); }
     throw new ApiError(response.status, data?.erro ?? data?.mensagem ?? data?.message ?? "Não foi possível concluir a operação.", fields);
   }
   const parsed = schema.safeParse(body);
   if (!parsed.success) throw new ApiError(response.status, "Resposta da API incompatível com o contrato esperado.");
   return parsed.data;
 }
+

@@ -2,11 +2,11 @@
 @config "../tailwind.config.ts";
 
 @theme {
-  /* Tokens extraídos do dashboard estático; valores originais preservados. */
-  --color-sidebar: #064e3b;
-  --color-background: #f8e7c9;
+  /* Padrão global Azul Confiança, definido no design system. */
+  --color-sidebar: #164e73;
+  --color-background: #edf4f8;
   --color-card: #ffffff;
-  --color-action: #064e3b;
+  --color-action: #164e73;
   --color-critical: #b42318;
   --color-critical-text: #97281c;
   --color-critical-bg: #fbecea;
@@ -18,13 +18,20 @@
   --color-medium: #c9a227;
   --color-medium-text: #7d5a12;
   --color-success: #16876a;
+  --color-success-text: #11664f;
+  --color-success-bg: #edf5f1;
+  --color-success-border: #b9d9cd;
+  --color-medium-bg: #fbf2e1;
+  --color-medium-border: #e9d2a8;
+  --color-accent: #2586a6;
+  --color-on-action: #ffffff;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
   --radius-full: 9999px;
-  --shadow-card: 0 1px 2px rgba(6,78,59,0.05);
-  --shadow-button: 0 1px 1px rgba(6,78,59,0.04);
+  --shadow-card: 0 1px 2px rgba(22,78,115,0.05);
+  --shadow-button: 0 1px 1px rgba(22,78,115,0.04);
   --shadow-logo: 0 2px 8px rgba(0,0,0,0.18);
   --text-ui-8-5: 8.5px;
   --text-ui-9: 9px;
@@ -41,26 +48,26 @@
   --text-ui-26: 26px;
   --text-ui-28: 28px;
 
-  /* Paleta principal do projeto: verde profundo + creme */
-  --color-brand-950: #033327;
-  --color-brand-900: #064e3b;
-  --color-brand-800: #0a5f49;
-  --color-brand-700: #0f7057;
-  --color-brand-600: #16876a;
-  --color-brand-500: #2ba184;
-  --color-brand-200: #b9d9cd;
-  --color-brand-100: #d8e9e2;
-  --color-brand-50: #edf5f1;
+  /* Escalas Azul Confiança. cream é um alias legado para superfícies frias. */
+  --color-brand-950: #102f46;
+  --color-brand-900: #164e73;
+  --color-brand-800: #123f5e;
+  --color-brand-700: #1d6788;
+  --color-brand-600: #2586a6;
+  --color-brand-500: #369bb9;
+  --color-brand-200: #bddde8;
+  --color-brand-100: #daebf2;
+  --color-brand-50: #eff7fa;
 
-  --color-cream: #f8e7c9;
-  --color-cream-50: #fefbf4;
-  --color-cream-100: #fbf2e1;
-  --color-cream-200: #f2e1c2;
-  --color-cream-300: #e9d2a8;
+  --color-cream: #edf4f8;
+  --color-cream-50: #f7fafc;
+  --color-cream-100: #edf4f8;
+  --color-cream-200: #dce8ef;
+  --color-cream-300: #c2d5e0;
 
-  --color-ink: #16241f;
-  --color-muted: #697a72;
-  --color-line: #e7decb;
+  --color-ink: #172c3a;
+  --color-muted: #617380;
+  --color-line: #d3e0e8;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
@@ -96,3 +103,4 @@
     scrollbar-color: var(--color-cream-300) transparent;
   }
 }
+

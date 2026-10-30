@@ -1,0 +1,81 @@
+"use client";
+import { useEffect, useState, type FormEvent } from "react";
+import { Badge, Button, Card, Dialog, EmptyState, Input, PageHeader, Select } from "@/src/components/ui";
+import { lerDetalhe, lerLista, setorPayload, type Setor } from "@/src/lib/setores/schema";
+const vazio = { unidade_id: "", nome: "", ativo: true };
+class RequestError extends Error {
+  constructor(message: string, public fields: Record<string, string[]> = {}) { super(message); }
+}
+async function request(url: string, options?: RequestInit): Promise<unknown> {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new RequestError(response.status === 401 ? "Sua sessão expirou. Entre novamente." : data?.message ?? "Não foi possível concluir a operação.", data?.fields ?? {});
+  return data;
+}
+export function Setores() {
+  const [rows, setRows] = useState<Setor[]>([]), [loading, setLoading] = useState(true), [erro, setErro] = useState("");
+  const [unidade, setUnidade] = useState(""), [situacao, setSituacao] = useState(""), [filtros, setFiltros] = useState({ unidade: "", situacao: "" });
+  const [offset, setOffset] = useState(0), [versao, setVersao] = useState(0);
+  const [modal, setModal] = useState(false), [editando, setEditando] = useState<number | null>(null), [form, setForm] = useState(vazio);
+  const [salvando, setSalvando] = useState(false), [consultando, setConsultando] = useState<number | null>(null);
+  const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
+  useEffect(() => {
+    const controller = new AbortController();
+    const query = new URLSearchParams({ limit: "50", offset: String(offset) });
+    if (filtros.unidade) query.set("unidade_id", filtros.unidade);
+    if (filtros.situacao) query.set("ativo", filtros.situacao);
+    request(`/api/setores?${query}`, { signal: controller.signal }).then(data => {
+      if (controller.signal.aborted) return;
+      try { setRows(lerLista(data)); } catch { setRows([]); setErro("A resposta da API não corresponde aos dados esperados de setores."); }
+    }).catch(error => { if (!controller.signal.aborted) { setRows([]); setErro(error.message); } }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [filtros, offset, versao]);
+  function recarregar() { setErro(""); setLoading(true); setVersao(v => v + 1); }
+  async function abrir(id?: number) {
+    if (consultando !== null) return;
+    setFormErro(""); setFields({});
+    if (id !== undefined) {
+      setConsultando(id);
+      try { const setor = lerDetalhe(await request(`/api/setores/${id}`)); setForm({ nome: setor.nome, ativo: setor.ativo, unidade_id: String(setor.unidade_id) }); setEditando(id); setModal(true); }
+      catch (error) { setAviso(error instanceof RequestError ? error.message : "Não foi possível consultar os dados do setor."); }
+      finally { setConsultando(null); }
+    } else { setForm({ ...vazio, unidade_id: filtros.unidade }); setEditando(null); setModal(true); }
+  }
+  async function salvar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (salvando) return;
+    const parsed = setorPayload.safeParse({ ...form, unidade_id: Number(form.unidade_id) });
+    if (!parsed.success) { setFields(parsed.error.flatten().fieldErrors); setFormErro("Revise os campos destacados."); return; }
+    setSalvando(true); setFormErro(""); setFields({});
+    try {
+      await request(editando === null ? "/api/setores" : `/api/setores/${editando}`, { method: editando === null ? "POST" : "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
+      setModal(false); setAviso("Setor salvo com sucesso."); setOffset(0); recarregar();
+    } catch (error) { setFormErro(error instanceof Error ? error.message : "Não foi possível salvar."); if (error instanceof RequestError) setFields(error.fields); }
+    finally { setSalvando(false); }
+  }
+  return <>
+    <PageHeader title="Setores" description="Cadastre e acompanhe os setores de cada unidade." actions={<Button disabled={consultando !== null} onClick={() => void abrir()}>Novo setor</Button>} />
+    {aviso && <p role="status" className="mb-4 text-sm">{aviso}</p>}
+    <Card className="overflow-hidden">
+      <form className="flex flex-wrap items-end gap-3 border-b border-line p-5" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltros({ unidade, situacao }); recarregar(); }}>
+        <Input label="Filtrar por ID da unidade" type="number" min="1" step="1" value={unidade} onChange={e => setUnidade(e.target.value)} placeholder="Todas as unidades" />
+        <Select label="Situação" value={situacao} onChange={e => setSituacao(e.target.value)}><option value="">Todas</option><option value="true">Ativos</option><option value="false">Inativos</option></Select>
+        <Button type="submit" variant="secondary">Aplicar filtros</Button>
+        <Button variant="ghost" onClick={() => { setUnidade(""); setSituacao(""); setFiltros({ unidade: "", situacao: "" }); setOffset(0); recarregar(); }}>Limpar</Button>
+      </form>
+      {loading ? <p role="status" className="p-6 text-sm text-muted">Carregando setores...</p> : erro ? <div role="alert" className="space-y-3 p-6 text-sm text-critical-text"><p>{erro}</p><Button variant="secondary" onClick={recarregar}>Tentar novamente</Button></div> : rows.length === 0 ? <EmptyState title="Nenhum setor encontrado" description="Ajuste os filtros ou cadastre um setor." /> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Setores cadastrados</caption><thead className="bg-cream-50 text-xs uppercase text-muted"><tr>{["Setor", "Unidade", "Situação", "Ações"].map(t => <th scope="col" key={t} className="p-4">{t}</th>)}</tr></thead><tbody className="divide-y divide-line">{rows.map(item => <tr key={item.id} className="hover:bg-cream-50"><td className="p-4"><strong>{item.nome}</strong><p className="text-xs text-muted">ID {item.id}</p></td><td className="p-4">ID {item.unidade_id}</td><td className="p-4"><Badge variant={item.ativo ? "success" : "neutral"}>{item.ativo ? "Ativo" : "Inativo"}</Badge></td><td className="p-4"><Button variant="secondary" disabled={consultando !== null} onClick={() => void abrir(item.id)} aria-label={`Editar ${item.nome}`}>{consultando === item.id ? "Carregando..." : "Editar"}</Button></td></tr>)}</tbody></table></div>}
+      <nav aria-label="Paginação de setores" className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4"><span className="text-xs text-muted">Página {offset / 50 + 1} · {loading ? "Carregando..." : `${rows.length} setores`}</span><div className="flex gap-2"><Button variant="secondary" disabled={loading || offset === 0} onClick={() => { setOffset(v => Math.max(0, v - 50)); recarregar(); }}>Anterior</Button><Button variant="secondary" disabled={loading || !!erro || rows.length < 50} onClick={() => { setOffset(v => v + 50); recarregar(); }}>Próxima</Button></div></nav>
+    </Card>
+    <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title={editando === null ? "Novo setor" : "Editar setor"}>
+      <form onSubmit={salvar} className="space-y-4">
+        {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
+        <Input label="ID da unidade" type="number" min="1" step="1" required disabled={salvando} value={form.unidade_id} error={fields.unidade_id?.[0]} onChange={e => setForm({ ...form, unidade_id: e.target.value })} />
+        <p className="text-xs text-muted">Use o identificador exibido no cadastro de Unidades.</p>
+        <Input label="Nome do setor" required disabled={salvando} value={form.nome} error={fields.nome?.[0]} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Usinagem" />
+        <Select label="Situação" disabled={salvando} value={String(form.ativo)} error={fields.ativo?.[0]} onChange={e => setForm({ ...form, ativo: e.target.value === "true" })}><option value="true">Ativa</option><option value="false">Inativa</option></Select>
+        <div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar setor"}</Button></div>
+      </form>
+    </Dialog>
+  </>;
+}
+
+

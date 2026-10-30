@@ -6,7 +6,7 @@ import { createSession } from "@/src/lib/auth/session";
 
 const loginSchema = z.object({
   email: z.email("Informe um e-mail válido."),
-  senha: z.string().min(1, "Informe sua senha."),
+  senha: z.string().min(1, "Informe sua senha."), manterConectado: z.boolean().optional().default(false),
 });
 
 function erroDeValidacao(issues: z.core.$ZodIssue[]) {
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   try {
     const token = await autenticar(parsed.data.email.trim(), parsed.data.senha);
-    await createSession(token);
+    await createSession(token, parsed.data.manterConectado);
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof ApiError) {
@@ -53,3 +53,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Erro inesperado ao autenticar. Tente novamente." }, { status: 500 });
   }
 }
+

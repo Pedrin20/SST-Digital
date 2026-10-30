@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import {
   AlertTriangleIcon,
-  ArrowRightIcon,
+
   EyeIcon,
   EyeOffIcon,
-  LockIcon,
-  MailIcon,
+
+
 } from "@/app/components/icons";
 
 type CampoDoFormulario = "email" | "senha" | "form";
@@ -31,6 +31,7 @@ export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [manterConectado, setManterConectado] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export function LoginForm() {
       const resposta = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailNormalizado, senha }),
+        body: JSON.stringify({ email: emailNormalizado, senha, manterConectado }),
       });
       const dados = (await resposta.json().catch(() => null)) as
         | { message?: string; fields?: ErrosDeCampo }
@@ -112,7 +113,7 @@ export function LoginForm() {
           E-mail corporativo
         </label>
         <div className="relative mt-1.5">
-          <MailIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted/80" />
+          
           <input
             id="email"
             name="email"
@@ -137,17 +138,17 @@ export function LoginForm() {
       </div>
 
       <div className="mt-4">
-        <label htmlFor="senha" className="block text-[11px] font-medium text-ink">
+        <div className="login-password-label"><label htmlFor="senha" className="block text-[11px] font-medium text-ink">
           Senha
-        </label>
+        </label><a href="#login-support">Esqueci minha senha</a></div>
         <div className="relative mt-1.5">
-          <LockIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted/80" />
+          
           <input
             id="senha"
             name="senha"
             type={mostrarSenha ? "text" : "password"}
             autoComplete="current-password"
-            placeholder="Sua senha"
+            placeholder="••••••••"
             value={senha}
             disabled={enviando}
             aria-invalid={Boolean(erroSenha)}
@@ -172,6 +173,7 @@ export function LoginForm() {
         ) : null}
       </div>
 
+      <label className="login-remember"><input type="checkbox" checked={manterConectado} onChange={e => setManterConectado(e.target.checked)} />Manter conectado neste dispositivo</label>
       <button
         type="submit"
         disabled={enviando}
@@ -187,11 +189,12 @@ export function LoginForm() {
           </>
         ) : (
           <>
-            Entrar na plataforma
-            <ArrowRightIcon className="h-4 w-4" />
+            Entrar
+            
           </>
         )}
       </button>
     </form>
   );
 }
+
