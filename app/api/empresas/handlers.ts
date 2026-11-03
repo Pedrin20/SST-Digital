@@ -9,6 +9,7 @@ export async function encaminhar(path: string, options: RequestInit = {}) {
   if (!token) return NextResponse.json({ message: "Sua sessão expirou. Entre novamente." }, { status: 401 });
   try {
     const data = await apiFetch(path, z.unknown(), { ...options, headers: { Authorization: `Bearer ${token}` } }, { accessErrors: false });
+    if (data === undefined) return new NextResponse(null, { status: 204 });
     return NextResponse.json(options.method === "POST" || options.method === "PATCH" ? { ok: true } : data, { status: options.method === "POST" ? 201 : 200 });
   } catch (error) {
     if (error instanceof ApiError) {
