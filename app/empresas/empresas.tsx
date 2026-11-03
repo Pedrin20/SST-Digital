@@ -1,4 +1,6 @@
 "use client";
+import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
+import { FRASE_EXCLUSAO_EMPRESA } from "@/src/lib/empresas/exclusao";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Button, Card, Dialog, Input, Select } from "@/src/components/ui";
@@ -29,7 +31,7 @@ function formatarCnpj(value: string) {
   return digits.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
 }
 async function requisicao(url: string, options?: RequestInit): Promise<unknown> {
-  const response = await fetch(url, options);
+  const response = await fetchComDiagnosticoDelete(url, options);
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     if (response.status === 401) throw new Error("Sua sessão expirou. Acesse a página de login para entrar novamente.");
@@ -49,6 +51,8 @@ export function Empresas() {
   const [editando, setEditando] = useState<Empresa | null>(null);
   const [form, setForm] = useState<Formulario>(vazio);
   const [formErro, setFormErro] = useState("");
+  const [exclusao, setExclusao] = useState<Empresa | null>(null);
+  const [confirmacao, setConfirmacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [versao, setVersao] = useState(0);
 
@@ -87,14 +91,28 @@ export function Empresas() {
     finally { setSalvando(false); }
   }
 
+  async function excluir() {
+    if (!exclusao || salvando) return;
+    if (confirmacao !== FRASE_EXCLUSAO_EMPRESA) { setFormErro("Digite a frase de confirmação exatamente como indicada."); return; }
+    setSalvando(true); setFormErro("");
+    try { await requisicao(`/api/empresas/${exclusao.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmacao }) }); setExclusao(null); setConfirmacao(""); setOffset(0); setLoading(true); setErro(""); setVersao(v => v + 1); }
+    catch (error) { setFormErro(error instanceof Error ? error.message : "Não foi possível excluir a empresa."); }
+    finally { setSalvando(false); }
+  }
   return <>
     <nav aria-label="Trilha de navegação" className="pt-5 text-[11px] text-muted"><a href="/dashboard" className="font-medium text-brand-900 hover:underline">SST Digital</a><span className="mx-2">/</span><span aria-current="page">Empresas</span></nav>
     <div className="flex flex-col gap-4 py-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-semibold tracking-[0.12em] text-brand-700 uppercase">Cadastros</p><h1 className="mt-1 text-[26px] font-semibold tracking-tight text-brand-900">Empresas</h1><p className="mt-1 text-[12px] text-muted">Consulte e gerencie as empresas cadastradas na plataforma.</p></div><Button onClick={() => abrir()} className="px-4"><PlusIcon className="h-4 w-4" /> Nova empresa</Button></div>
     <Card className="overflow-hidden"><div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5"><div><h2 className="text-[14px] font-semibold text-ink">Empresas cadastradas</h2><p className="mt-1 text-[11px] text-muted">Acompanhe os dados e a situação de cada empresa.</p></div><div className="w-full sm:w-44"><Select label="Situação" value={filtro} onChange={e => { setLoading(true); setErro(""); setFiltro(e.target.value); setOffset(0); }}><option value="">Todas</option><option value="true">Ativas</option><option value="false">Inativas</option></Select></div></div>
-      {loading ? <p className="p-6 text-[12px] text-muted" role="status">Carregando empresas...</p> : erro ? <div role="alert" className="p-6 text-[12px] text-critical-text"><p>{erro}</p><Button variant="secondary" className="mt-3" onClick={() => { setLoading(true); setErro(""); setVersao(v => v + 1); }}>Tentar novamente</Button></div> : rows.length === 0 ? <div className="p-8 text-center"><p className="text-[13px] font-semibold">Nenhuma empresa encontrada</p><p className="mt-1 text-[11px] text-muted">Altere o filtro ou cadastre uma nova empresa.</p></div> : <ul className="divide-y divide-line">{rows.map(item => <li key={item.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="break-words text-[13px] font-semibold text-ink">{item.nome}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.ativo ? "bg-success-bg text-success-text" : "bg-cream-100 text-muted"}`}>{item.ativo ? "Ativa" : "Inativa"}</span></div><p className="mt-1 text-[11px] text-muted">CNPJ {item.cnpj ? formatarCnpj(item.cnpj) : "não informado"} <span className="mx-1">·</span> ID {item.id}</p></div><Button variant="secondary" onClick={() => abrir(item)} aria-label={`Editar ${item.nome}`}>Editar</Button></li>)}</ul>}
+      {loading ? <p className="p-6 text-[12px] text-muted" role="status">Carregando empresas...</p> : erro ? <div role="alert" className="p-6 text-[12px] text-critical-text"><p>{erro}</p><Button variant="secondary" className="mt-3" onClick={() => { setLoading(true); setErro(""); setVersao(v => v + 1); }}>Tentar novamente</Button></div> : rows.length === 0 ? <div className="p-8 text-center"><p className="text-[13px] font-semibold">Nenhuma empresa encontrada</p><p className="mt-1 text-[11px] text-muted">Altere o filtro ou cadastre uma nova empresa.</p></div> : <ul className="divide-y divide-line">{rows.map(item => <li key={item.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="break-words text-[13px] font-semibold text-ink">{item.nome}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.ativo ? "bg-success-bg text-success-text" : "bg-cream-100 text-muted"}`}>{item.ativo ? "Ativa" : "Inativa"}</span></div><p className="mt-1 text-[11px] text-muted">CNPJ {item.cnpj ? formatarCnpj(item.cnpj) : "não informado"} <span className="mx-1">·</span> ID {item.id}</p></div><div className="flex gap-2"><Button variant="secondary" onClick={() => abrir(item)} aria-label={`Editar ${item.nome}`}>Editar</Button><Button variant="ghost" onClick={() => { setFormErro(""); setConfirmacao(""); setExclusao(item); }} aria-label={`Excluir empresa ${item.id}`}>Excluir</Button></div></li>)}</ul>}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-cream-50/70 px-4 py-3 sm:px-5"><p className="text-[11px] text-muted">{loading ? "Carregando..." : `${rows.length} empresa(s) nesta página`}</p><div className="flex gap-2"><Button variant="secondary" disabled={loading || offset === 0} onClick={() => { setLoading(true); setOffset(v => Math.max(0, v - limite)); }}>Anterior</Button><Button variant="secondary" disabled={loading || !!erro || rows.length < limite} onClick={() => { setLoading(true); setOffset(v => v + limite); }}>Próxima</Button></div></div>
     </Card>
     <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title={editando ? "Editar empresa" : "Nova empresa"}><form onSubmit={salvar} className="space-y-4"><p className="text-[11px] text-muted">{editando ? "Atualize os dados da empresa." : "Preencha os dados para cadastrar uma empresa. Apenas administradores podem cadastrar."}</p>{formErro && <p role="alert" className="rounded-lg border border-critical-border bg-critical-bg p-3 text-[11px] text-critical-text">{formErro}</p>}<Input label="Nome da empresa" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required disabled={salvando} /><Input label="CNPJ" value={form.cnpj} onChange={e => setForm({ ...form, cnpj: formatarCnpj(e.target.value) })} placeholder="00.000.000/0000-00" inputMode="numeric" required={editando?.cnpj !== null} disabled={salvando} /><Select label="Situação" value={String(form.ativo)} onChange={e => setForm({ ...form, ativo: e.target.value === "true" })} disabled={salvando}><option value="true">Ativa</option><option value="false">Inativa</option></Select><div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar empresa"}</Button></div></form></Dialog>
+    <Dialog open={exclusao !== null} onClose={() => { if (!salvando) setExclusao(null); }} title="Excluir empresa">
+      <p className="text-sm">A empresa {exclusao?.nome} (ID {exclusao?.id}) e seus dados operacionais vinculados serão excluídos permanentemente. Esta operação não pode ser desfeita. As contas globais de usuários e os arquivos externos serão mantidos.</p>
+      <div className="mt-4"><Input label={`Digite ${FRASE_EXCLUSAO_EMPRESA} para confirmar`} value={confirmacao} onChange={e => setConfirmacao(e.target.value)} disabled={salvando} autoComplete="off" /></div>
+      {formErro && <p role="alert" className="mt-3 text-sm text-critical-text">{formErro}</p>}
+      <div className="mt-5 flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setExclusao(null)}>Voltar</Button><Button disabled={salvando || confirmacao !== FRASE_EXCLUSAO_EMPRESA} onClick={() => void excluir()}>{salvando ? "Excluindo..." : "Confirmar exclusão"}</Button></div>
+    </Dialog>
   </>;
 }
 

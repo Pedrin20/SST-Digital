@@ -1,4 +1,5 @@
 "use client";
+import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Card, Dialog, EmptyState, Input, PageHeader } from "@/src/components/ui";
 import { lerLista, vinculoPayload, type Vinculo } from "@/src/lib/usuarios-empresas/schema";
@@ -8,7 +9,7 @@ class RequestError extends Error {
   constructor(message: string, public status: number, public fields: Record<string, string[]> = {}) { super(message); }
 }
 async function request(url: string, options?: RequestInit): Promise<unknown> {
-  const response = await fetch(url, options);
+  const response = await fetchComDiagnosticoDelete(url, options);
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new RequestError(response.status === 401 ? "Sua sessão expirou. Entre novamente." : response.status === 403 ? "O acesso aos vínculos é restrito ao administrador do sistema." : data?.message ?? "Não foi possível concluir a operação.", response.status, data?.fields ?? {});
   return data;

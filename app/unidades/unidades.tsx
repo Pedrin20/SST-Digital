@@ -1,4 +1,5 @@
 "use client";
+import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
 import { Badge, Button, Card, Dialog, EmptyState, Input, PageHeader, Select } from "@/src/components/ui";
 import { lerDetalhe, lerLista, unidadePayload, type Unidade } from "@/src/lib/unidades/schema";
@@ -7,7 +8,7 @@ class RequestError extends Error {
   constructor(message: string, public fields: Record<string, string[]> = {}) { super(message); }
 }
 async function request(url: string, options?: RequestInit): Promise<unknown> {
-  const response = await fetch(url, options);
+  const response = await fetchComDiagnosticoDelete(url, options);
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new RequestError(response.status === 401 ? "Sua sessão expirou. Entre novamente." : data?.message ?? "Não foi possível concluir a operação.", data?.fields ?? {});
   return data;
@@ -17,6 +18,7 @@ export function Unidades() {
   const [empresa, setEmpresa] = useState(""), [situacao, setSituacao] = useState(""), [filtros, setFiltros] = useState({ empresa: "", situacao: "" });
   const [offset, setOffset] = useState(0), [versao, setVersao] = useState(0);
   const [modal, setModal] = useState(false), [editando, setEditando] = useState<number | null>(null), [form, setForm] = useState(vazio);
+  const [exclusao, setExclusao] = useState<Unidade | null>(null);
   const [salvando, setSalvando] = useState(false), [consultando, setConsultando] = useState<number | null>(null);
   const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
   useEffect(() => {
@@ -52,6 +54,13 @@ export function Unidades() {
     } catch (error) { setFormErro(error instanceof Error ? error.message : "Não foi possível salvar."); if (error instanceof RequestError) setFields(error.fields); }
     finally { setSalvando(false); }
   }
+  async function excluir() {
+    if (!exclusao || salvando) return;
+    setSalvando(true); setFormErro("");
+    try { await request(`/api/unidades/${exclusao.id}`, { method: "DELETE" }); setExclusao(null); setAviso("Unidade excluída com sucesso."); setOffset(0); recarregar(); }
+    catch (error) { setFormErro(error instanceof Error ? error.message : "Não foi possível excluir a unidade."); }
+    finally { setSalvando(false); }
+  }
   return <>
     <PageHeader title="Unidades" description="Cadastre e acompanhe as unidades de cada empresa." actions={<Button disabled={consultando !== null} onClick={() => void abrir()}>Nova unidade</Button>} />
     {aviso && <p role="status" className="mb-4 text-sm">{aviso}</p>}
@@ -62,7 +71,7 @@ export function Unidades() {
         <Button type="submit" variant="secondary">Aplicar filtros</Button>
         <Button variant="ghost" onClick={() => { setEmpresa(""); setSituacao(""); setFiltros({ empresa: "", situacao: "" }); setOffset(0); recarregar(); }}>Limpar</Button>
       </form>
-      {loading ? <p role="status" className="p-6 text-sm text-muted">Carregando unidades...</p> : erro ? <div role="alert" className="space-y-3 p-6 text-sm text-critical-text"><p>{erro}</p><Button variant="secondary" onClick={recarregar}>Tentar novamente</Button></div> : rows.length === 0 ? <EmptyState title="Nenhuma unidade encontrada" description="Ajuste os filtros ou cadastre uma unidade." /> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Unidades cadastradas</caption><thead className="bg-cream-50 text-xs uppercase text-muted"><tr>{["Unidade", "Empresa", "Endereço", "Situação", "Ações"].map(t => <th scope="col" key={t} className="p-4">{t}</th>)}</tr></thead><tbody className="divide-y divide-line">{rows.map(item => <tr key={item.id} className="hover:bg-cream-50"><td className="p-4"><strong>{item.nome}</strong><p className="text-xs text-muted">ID {item.id}</p></td><td className="p-4">ID {item.empresa_id}</td><td className="max-w-sm break-words p-4">{item.endereco || "Não informado"}</td><td className="p-4"><Badge variant={item.ativo ? "success" : "neutral"}>{item.ativo ? "Ativa" : "Inativa"}</Badge></td><td className="p-4"><Button variant="secondary" disabled={consultando !== null} onClick={() => void abrir(item.id)} aria-label={`Editar ${item.nome}`}>{consultando === item.id ? "Carregando..." : "Editar"}</Button></td></tr>)}</tbody></table></div>}
+      {loading ? <p role="status" className="p-6 text-sm text-muted">Carregando unidades...</p> : erro ? <div role="alert" className="space-y-3 p-6 text-sm text-critical-text"><p>{erro}</p><Button variant="secondary" onClick={recarregar}>Tentar novamente</Button></div> : rows.length === 0 ? <EmptyState title="Nenhuma unidade encontrada" description="Ajuste os filtros ou cadastre uma unidade." /> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Unidades cadastradas</caption><thead className="bg-cream-50 text-xs uppercase text-muted"><tr>{["Unidade", "Empresa", "Endereço", "Situação", "Ações"].map(t => <th scope="col" key={t} className="p-4">{t}</th>)}</tr></thead><tbody className="divide-y divide-line">{rows.map(item => <tr key={item.id} className="hover:bg-cream-50"><td className="p-4"><strong>{item.nome}</strong><p className="text-xs text-muted">ID {item.id}</p></td><td className="p-4">ID {item.empresa_id}</td><td className="max-w-sm break-words p-4">{item.endereco || "Não informado"}</td><td className="p-4"><Badge variant={item.ativo ? "success" : "neutral"}>{item.ativo ? "Ativa" : "Inativa"}</Badge></td><td className="p-4"><div className="flex gap-2"><Button variant="secondary" disabled={consultando !== null} onClick={() => void abrir(item.id)} aria-label={`Editar ${item.nome}`}>{consultando === item.id ? "Carregando..." : "Editar"}</Button><Button variant="ghost" onClick={() => { setFormErro(""); setExclusao(item); }} aria-label={`Excluir unidade ${item.id}`}>Excluir</Button></div></td></tr>)}</tbody></table></div>}
       <nav aria-label="Paginação de unidades" className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4"><span className="text-xs text-muted">Página {offset / 50 + 1} · {loading ? "Carregando..." : `${rows.length} unidades`}</span><div className="flex gap-2"><Button variant="secondary" disabled={loading || offset === 0} onClick={() => { setOffset(v => Math.max(0, v - 50)); recarregar(); }}>Anterior</Button><Button variant="secondary" disabled={loading || !!erro || rows.length < 50} onClick={() => { setOffset(v => v + 50); recarregar(); }}>Próxima</Button></div></nav>
     </Card>
     <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title={editando === null ? "Nova unidade" : "Editar unidade"}>
@@ -75,6 +84,11 @@ export function Unidades() {
         <Select label="Situação" disabled={salvando} value={String(form.ativo)} error={fields.ativo?.[0]} onChange={e => setForm({ ...form, ativo: e.target.value === "true" })}><option value="true">Ativa</option><option value="false">Inativa</option></Select>
         <div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar unidade"}</Button></div>
       </form>
+    </Dialog>
+    <Dialog open={exclusao !== null} onClose={() => { if (!salvando) setExclusao(null); }} title="Excluir unidade">
+      <p className="text-sm">Deseja excluir a unidade {exclusao?.nome} (ID {exclusao?.id})?</p>
+      {formErro && <p role="alert" className="mt-3 text-sm text-critical-text">{formErro}</p>}
+      <div className="mt-5 flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setExclusao(null)}>Voltar</Button><Button disabled={salvando} onClick={() => void excluir()}>{salvando ? "Excluindo..." : "Confirmar exclusão"}</Button></div>
     </Dialog>
   </>;
 }
