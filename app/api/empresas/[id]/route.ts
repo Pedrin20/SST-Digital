@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { corpoEmpresa, encaminhar } from "../handlers";
+import { camposDeErro, corpoEmpresa, encaminhar } from "../handlers";
 import { FRASE_EXCLUSAO_EMPRESA } from "@/src/lib/empresas/exclusao";
 
 type Context = { params: Promise<{ id: string }> };
@@ -12,7 +12,12 @@ export async function PATCH(request: Request, { params }: Context) {
   const { id } = await params;
   if (!/^\d+$/.test(id)) return NextResponse.json({ message: "ID inválido." }, { status: 400 });
   const result = await corpoEmpresa(request, true);
-  if (!result.success) return NextResponse.json({ message: "Informe nome, CNPJ com 14 dígitos e situação." }, { status: 400 });
+  if (!result.success) {
+    return NextResponse.json(
+      { message: "Revise os dados da empresa.", fields: camposDeErro(result.error) },
+      { status: 400 },
+    );
+  }
   return encaminhar(`/empresas/${id}`, { method: "PATCH", body: JSON.stringify(result.data) });
 }
 export async function DELETE(request: Request, { params }: Context) {
