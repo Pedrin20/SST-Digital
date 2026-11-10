@@ -12,9 +12,7 @@ import Image from "next/image";
 
 const navigation = [
   { label: "Dashboard Geral", href: "/dashboard", icon: DashboardIcon },
-  { label: "Empresas", href: "/empresas", icon: ShieldCheckIcon },
-  { label: "Unidades", href: "/unidades", icon: ShieldCheckIcon },
-  { label: "Setores", href: "/setores", icon: PlanIcon },
+  { label: "Estrutura organizacional", href: "/empresas", icon: ShieldCheckIcon },
   { label: "Perigos", href: "/perigos", icon: MatrixIcon },
   { label: "Avaliações de risco", href: "/avaliacoes-risco", icon: MatrixIcon },
   { label: "Ações", href: "/acoes", icon: PlanIcon },

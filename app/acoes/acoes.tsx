@@ -6,6 +6,13 @@ import { acaoPayload, prioridades, lerDetalhe, lerLista, type Acao } from "@/src
 
 import { Visoes } from "./visoes";
 
+const opcoesStatus = <>
+  <option value="PENDENTE">Pendente</option>
+  <option value="EM_ANDAMENTO">Em andamento</option>
+  <option value="CONCLUIDA">Concluída</option>
+  <option value="CANCELADA">Cancelada</option>
+</>;
+
 const vazio = { prioridade: "", perigo_id: "", descricao: "", responsavel_id: "", prazo: "", status: "PENDENTE" };
 const filtrosVazios = { prioridade: "", perigo_id: "", responsavel_id: "", status: "" };
 class RequestError extends Error {
@@ -91,11 +98,11 @@ export function Acoes() {
       <Button variant={quadro ? "secondary" : "primary"} aria-pressed={!quadro} onClick={() => setQuadro(false)}>Lista tabular</Button>
     </div>
     <Card className="overflow-hidden">
-      <form className="flex flex-wrap items-end gap-3 border-b border-line p-5" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltros(entrada); recarregar(); }}>
+      <form className="grid grid-cols-1 items-end gap-3 border-b border-line p-5 sm:grid-cols-2 xl:flex xl:flex-wrap" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltros(entrada); recarregar(); }}>
         <Input label="ID do perigo" type="number" min="1" step="1" value={entrada.perigo_id} onChange={e => setEntrada({ ...entrada, perigo_id: e.target.value })} placeholder="Todos" />
         <Input label="ID do responsável" type="number" min="1" step="1" value={entrada.responsavel_id} onChange={e => setEntrada({ ...entrada, responsavel_id: e.target.value })} placeholder="Todos" />
         <Select label="Prioridade" value={entrada.prioridade} onChange={e => setEntrada({ ...entrada, prioridade: e.target.value })}><option value="">Todas</option>{opcoesPrioridade}</Select>
-        <Input label="Status" value={entrada.status} onChange={e => setEntrada({ ...entrada, status: e.target.value })} placeholder="Todos" />
+        <Select label="Status" value={entrada.status} onChange={e => setEntrada({ ...entrada, status: e.target.value })}><option value="">Todos</option>{opcoesStatus}</Select>
         <Button type="submit" variant="secondary">Aplicar filtros</Button><Button variant="ghost" onClick={() => { setEntrada(filtrosVazios); setFiltros(filtrosVazios); setOffset(0); recarregar(); }}>Limpar</Button>
       </form>
       {loading ? <p role="status" className="p-6 text-sm text-muted">Carregando ações...</p> : erro ? <div role="alert" className="space-y-3 p-6 text-sm text-critical-text"><p>{erro}</p><Button variant="secondary" onClick={recarregar}>Tentar novamente</Button></div> : rows.length === 0 ? <EmptyState title="Nenhuma ação encontrada" description="Ajuste os filtros ou cadastre uma ação." /> : <Visoes rows={rows} quadro={quadro} opcoes={opcoes} />}
@@ -108,7 +115,7 @@ export function Acoes() {
         <p className="text-xs text-muted">Use os identificadores dos cadastros de Perigos e Usuários.</p>
         <Select label="Prioridade" value={form.prioridade} disabled={salvando} error={fields.prioridade?.[0]} onChange={e => setForm({ ...form, prioridade: e.target.value })}><option value="">Sem classificação</option>{opcoesPrioridade}</Select>
         <Textarea label="Descrição da ação" required disabled={salvando} value={form.descricao} error={fields.descricao?.[0]} onChange={e => setForm({ ...form, descricao: e.target.value })} placeholder="Descreva a medida a ser executada" />
-        <div className="grid gap-4 sm:grid-cols-2"><Input label="Prazo" type="date" required disabled={salvando} value={form.prazo} error={fields.prazo?.[0]} onChange={e => setForm({ ...form, prazo: e.target.value })} /><Input label="Status" required disabled={salvando} value={form.status} error={fields.status?.[0]} onChange={e => setForm({ ...form, status: e.target.value })} /></div>
+        <div className="grid gap-4 sm:grid-cols-2"><Input label="Prazo" type="date" required disabled={salvando} value={form.prazo} error={fields.prazo?.[0]} onChange={e => setForm({ ...form, prazo: e.target.value })} /><Select label="Status" required disabled={salvando} value={form.status} error={fields.status?.[0]} onChange={e => setForm({ ...form, status: e.target.value })}>{opcoesStatus}</Select></div>
         <div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar ação"}</Button></div>
       </form>
     </Dialog>

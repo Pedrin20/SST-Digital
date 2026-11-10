@@ -1,7 +1,22 @@
-import { Sidebar } from "@/app/components/sidebar";
-import { Topbar } from "@/app/components/topbar";
+import { Suspense } from "react";
+import { Estrutura } from "@/app/components/estrutura";
+import { lerContexto, type ParametrosEstrutura } from "@/src/lib/estrutura";
 import { Setores } from "./setores";
-export default function SetoresPage() {
-  return <div className="min-h-screen bg-cream"><Sidebar active="Setores" /><div className="lg:pl-[264px]"><Topbar /><main className="mx-auto max-w-[1500px] px-4 pb-10 sm:px-6 lg:px-8"><Setores /></main></div></div>;
+
+type Props = { searchParams: Promise<ParametrosEstrutura> };
+
+export default function SetoresPage(props: Props) {
+  return <Suspense fallback={<Estrutura nivel="Setores"><p role="status" className="py-5 text-sm text-muted">Carregando setores...</p></Estrutura>}>
+    <ListaComContexto {...props} />
+  </Suspense>;
+}
+
+async function ListaComContexto({ searchParams }: Props) {
+  const params = await searchParams;
+  const empresa = lerContexto(params, "empresa");
+  const unidade = lerContexto(params, "unidade");
+  return <Estrutura nivel="Setores" empresa={unidade ? empresa : undefined} unidade={unidade}>
+    <Setores key={unidade?.id ?? "todos"} contexto={unidade} />
+  </Estrutura>;
 }
 

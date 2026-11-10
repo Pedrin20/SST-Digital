@@ -1,7 +1,7 @@
 "use client";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
-import { Button, Card, Dialog, EmptyState, Input, PageHeader } from "@/src/components/ui";
+import { Button, Card, Dialog, EmptyState, Input, PageHeader, Select } from "@/src/components/ui";
 import { lerLista, vinculoPayload, type Vinculo } from "@/src/lib/usuarios-empresas/schema";
 
 const vazio = { usuario_id: "", empresa_id: "", perfil: "ADMIN" };
@@ -64,7 +64,11 @@ export function Vinculos() {
         {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
         <div className="grid gap-4 sm:grid-cols-2"><Input label="ID do usuário" type="number" min="1" step="1" required disabled={salvando || !!editando} value={form.usuario_id} error={fields.usuario_id?.[0]} onChange={e => setForm({ ...form, usuario_id: e.target.value })} /><Input label="ID da empresa" type="number" min="1" step="1" required disabled={salvando || !!editando} value={form.empresa_id} error={fields.empresa_id?.[0]} onChange={e => setForm({ ...form, empresa_id: e.target.value })} /></div>
         <p className="text-xs text-muted">Use os identificadores dos cadastros de Usuários e Empresas.</p>
-        <Input label="Perfil" required disabled={salvando} value={form.perfil} error={fields.perfil?.[0]} onChange={e => setForm({ ...form, perfil: e.target.value })} />
+        <Select label="Perfil" required disabled={salvando} value={form.perfil} error={fields.perfil?.[0]} onChange={e => setForm({ ...form, perfil: e.target.value })}>
+          <option value="ADMIN">Administrador</option>
+          <option value="GESTOR">Gestor</option>
+          <option value="LEITOR">Leitor</option>
+        </Select>
         <div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar vínculo"}</Button></div>
       </form>
     </Dialog>

@@ -1,6 +1,20 @@
-import { Sidebar } from "@/app/components/sidebar";
-import { Topbar } from "@/app/components/topbar";
+import { Suspense } from "react";
+import { Estrutura } from "@/app/components/estrutura";
+import { lerContexto, type ParametrosEstrutura } from "@/src/lib/estrutura";
 import { Unidades } from "./unidades";
-export default function UnidadesPage() {
-  return <div className="min-h-screen bg-cream"><Sidebar active="Unidades" /><div className="lg:pl-[264px]"><Topbar /><main className="mx-auto max-w-[1500px] px-4 pb-10 sm:px-6 lg:px-8"><Unidades /></main></div></div>;
+
+type Props = { searchParams: Promise<ParametrosEstrutura> };
+
+export default function UnidadesPage(props: Props) {
+  return <Suspense fallback={<Estrutura nivel="Unidades"><p role="status" className="py-5 text-sm text-muted">Carregando unidades...</p></Estrutura>}>
+    <ListaComContexto {...props} />
+  </Suspense>;
+}
+
+async function ListaComContexto({ searchParams }: Props) {
+  const params = await searchParams;
+  const empresa = lerContexto(params, "empresa");
+  return <Estrutura nivel="Unidades" empresa={empresa}>
+    <Unidades key={empresa?.id ?? "todos"} contexto={empresa} />
+  </Estrutura>;
 }

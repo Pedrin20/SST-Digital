@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { unidadesHref } from "@/src/lib/estrutura";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { FRASE_EXCLUSAO_EMPRESA } from "@/src/lib/empresas/exclusao";
 import {
@@ -491,7 +493,8 @@ export function Empresas() {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={unidadesHref(item)} className="inline-flex min-h-11 items-center rounded-lg bg-brand-50 px-4 text-sm font-semibold text-brand-900 hover:bg-brand-100" aria-label={`Ver unidades de ${item.nome}`}>Ver unidades</Link>
                     <Button variant="secondary" onClick={() => void abrir(item)} aria-label={`Editar ${item.nome}`}>
                       Editar
                     </Button>
