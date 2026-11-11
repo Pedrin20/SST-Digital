@@ -78,7 +78,7 @@ export function Perigos() {
         <Input label="ID do setor" type="number" min="1" step="1" required disabled={salvando} value={form.setor_id} error={fields.setor_id?.[0]} onChange={e => setForm({ ...form, setor_id: e.target.value })} />
         <p className="text-xs text-muted">Use o identificador exibido no cadastro de Setores.</p>
         <Textarea label="Descrição do perigo" required disabled={salvando} value={form.descricao} error={fields.descricao?.[0]} onChange={e => setForm({ ...form, descricao: e.target.value })} placeholder="Ex.: Partes móveis de máquina sem proteção" />
-        <Textarea label="Fonte" disabled={salvando} value={form.fonte} error={fields.fonte?.[0]} onChange={e => setForm({ ...form, fonte: e.target.value })} placeholder="Ex.: Prensa hidráulica na linha de produção" />
+        <Textarea label="Fonte/Local de ocorrência" disabled={salvando} value={form.fonte} error={fields.fonte?.[0]} onChange={e => setForm({ ...form, fonte: e.target.value })} placeholder="Ex.: Prensa hidráulica na linha de produção" />
         <Textarea label="Consequências" disabled={salvando} value={form.consequencias} error={fields.consequencias?.[0]} onChange={e => setForm({ ...form, consequencias: e.target.value })} placeholder="Descreva os possíveis danos associados ao perigo" />
         <div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar perigo"}</Button></div>
       </form>

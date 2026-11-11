@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { encaminhar } from "../empresas/handlers";
-import { avaliacaoPayload } from "@/src/lib/avaliacoes-risco/schema";
+import { avaliacaoPayload, avaliacaoLegadaPayload, exigeCamposLegados } from "@/src/lib/avaliacoes-risco/schema";
 export async function GET(request: Request) {
   const input = new URL(request.url).searchParams;
   const limit = input.get("limit") ?? "50", offset = input.get("offset") ?? "0", perigo = input.get("perigo_id");
@@ -11,8 +11,19 @@ export async function GET(request: Request) {
   return encaminhar(`/avaliacoes-risco?${query}`);
 }
 export async function POST(request: Request) {
-  const result = avaliacaoPayload.safeParse(await request.json().catch(() => null));
+  const body = await request.json().catch(() => null);
+  const legado = avaliacaoLegadaPayload.safeParse(body);
+  const result = avaliacaoPayload.safeParse(legado.success
+    ? { perigo_id: legado.data.perigo_id, probabilidade: legado.data.probabilidade, severidade: legado.data.severidade }
+    : body);
   if (!result.success) return NextResponse.json({ message: "Revise os dados da avaliação.", fields: result.error.flatten().fieldErrors }, { status: 400 });
-  return encaminhar("/avaliacoes-risco", { method: "POST", body: JSON.stringify(result.data) });
+  const resposta = await encaminhar("/avaliacoes-risco", { method: "POST", body: JSON.stringify(result.data) });
+  if (legado.success && resposta.status === 400) {
+    const erro = await resposta.clone().json().catch(() => null);
+    if (exigeCamposLegados(erro?.fields)) {
+      return encaminhar("/avaliacoes-risco", { method: "POST", body: JSON.stringify(legado.data) });
+    }
+  }
+  return resposta;
 }
 

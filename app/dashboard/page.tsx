@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
+import { ClassificacaoRisco } from "@/src/components/classificacao-risco";
 import { Sidebar } from "@/app/components/sidebar";
 import { Topbar } from "@/app/components/topbar";
 import { Card } from "@/src/components/ui";
@@ -68,7 +69,7 @@ export default function DashboardPage() {
 
 function avaliacaoLista(dados: Avaliacao[]) {
   if (!dados.length) return <Mensagem estado="vazio" vazio="Nenhuma avaliação de risco cadastrada até o momento." />;
-  return <ul className="divide-y divide-line">{dados.slice(0, 5).map(item => <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"><div><p className="text-xs font-semibold text-ink">Avaliação #{item.id} · Perigo #{item.perigo_id}</p><p className="mt-1 text-[11px] text-muted">Probabilidade: {item.probabilidade.toLocaleString("pt-BR")} · Severidade: {item.severidade.toLocaleString("pt-BR")}</p></div><span className="rounded border border-line bg-cream-50 px-2 py-1 text-[10px] font-medium text-brand-900">{item.classificacao || "Sem classificação"}</span></li>)}</ul>;
+  return <ul className="divide-y divide-line">{dados.slice(0, 5).map(item => <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"><div><p className="text-xs font-semibold text-ink">Avaliação #{item.id} · Perigo #{item.perigo_id}</p><p className="mt-1 text-[11px] text-muted">Probabilidade: {item.probabilidade.toLocaleString("pt-BR")} · Severidade: {item.severidade.toLocaleString("pt-BR")}</p></div><ClassificacaoRisco avaliacao={item} /></li>)}</ul>;
 }
 function acaoLista(dados: Acao[]) {
   if (!dados.length) return <Mensagem estado="vazio" vazio="Nenhuma ação cadastrada até o momento." />;

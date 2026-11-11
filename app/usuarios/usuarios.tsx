@@ -56,6 +56,7 @@ export function Usuarios() {
   const [form, setForm] = useState<Formulario>(vazio);
   const [formErro, setFormErro] = useState("");
   const [exclusao, setExclusao] = useState<Usuario | null>(null);
+  const [temPerfil, setTemPerfil] = useState(false), [removerPerfil, setRemoverPerfil] = useState(false), [perfilErro, setPerfilErro] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [consultando, setConsultando] = useState<number | null>(null);
   const [versao, setVersao] = useState(0);
@@ -72,6 +73,7 @@ export function Usuarios() {
 
   async function abrir(item?: Usuario) {
     let perfil = perfilVazio;
+    let temPerfil = false;
     if (item) {
       setConsultando(item.id);
       try {
@@ -84,11 +86,13 @@ export function Usuarios() {
         if (perfilResponse.status !== 404) {
           if (!perfilResponse.ok) throw new Error("Não foi possível consultar o perfil profissional do usuário.");
           const perfilData: unknown = await perfilResponse.json();
-          perfil = lerPerfil(perfilData && typeof perfilData === "object" && "data" in perfilData ? perfilData.data : perfilData);
+          const perfilValor = perfilData && typeof perfilData === "object" && "data" in perfilData ? perfilData.data : perfilData;
+          if (perfilValor && typeof perfilValor === "object") { perfil = lerPerfil(perfilValor); temPerfil = true; }
         }
       } catch (error) { setErro(error instanceof Error ? error.message : "Não foi possível consultar o usuário."); return; }
       finally { setConsultando(null); }
     }
+    setTemPerfil(temPerfil);
     setEditando(item ?? null);
     setForm(item ? { nome: item.nome, email: item.email, senha: "", ativo: item.ativo, perfil } : vazio);
     setFormErro(""); setModal(true);
@@ -116,6 +120,16 @@ export function Usuarios() {
     catch (error) { setFormErro(error instanceof Error ? error.message : "Não foi possível excluir o usuário."); }
     finally { setSalvando(false); }
   }
+
+  async function removerPerfilProfissional() {
+    if (!editando || salvando) return;
+    setSalvando(true); setPerfilErro("");
+    try {
+      await requisicao(`/api/usuarios/${editando.id}/perfil`, { method: "DELETE" });
+      setTemPerfil(false); setRemoverPerfil(false); setForm(anterior => ({ ...anterior, perfil: perfilVazio }));
+    } catch (error) { setPerfilErro(error instanceof Error ? error.message : "Não foi possível remover o perfil profissional."); }
+    finally { setSalvando(false); }
+  }
   return <>
     <nav aria-label="Trilha de navegação" className="pt-5 text-[11px] text-muted"><a href="/dashboard" className="font-medium text-brand-900 hover:underline">SST Digital</a><span className="mx-2">/</span><span aria-current="page">Usuários</span></nav>
     <div className="flex flex-col gap-4 py-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-semibold tracking-[0.12em] text-brand-700 uppercase">Cadastros</p><h1 className="mt-1 text-[26px] font-semibold tracking-tight text-brand-900">Usuários</h1><p className="mt-1 text-[12px] text-muted">Gerencie os usuários da plataforma, incluindo os técnicos de segurança do trabalho.</p></div><Button onClick={() => void abrir()} className="px-4"><PlusIcon className="h-4 w-4" /> Novo usuário</Button></div>
@@ -124,7 +138,7 @@ export function Usuarios() {
       {loading ? <p className="p-6 text-[12px] text-muted" role="status">Carregando usuários...</p> : erro ? <div role="alert" className="p-6 text-[12px] text-critical-text"><p>{erro}</p><Button variant="secondary" className="mt-3" onClick={() => { setLoading(true); setErro(""); setVersao(v => v + 1); }}>Tentar novamente</Button></div> : rows.length === 0 ? <div className="p-8 text-center"><p className="text-[13px] font-semibold">Nenhum usuário encontrado</p><p className="mt-1 text-[11px] text-muted">Cadastre um usuário para começar.</p></div> : <ul className="divide-y divide-line">{rows.map(item => <li key={item.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="break-words text-[13px] font-semibold text-ink">{item.nome}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.ativo ? "bg-success-bg text-success-text" : "bg-cream-100 text-muted"}`}>{item.ativo ? "Ativo" : "Inativo"}</span></div><p className="mt-1 break-all text-[11px] text-muted">{item.email} <span className="mx-1">·</span> ID {item.id}</p></div><div className="flex gap-2"><Button variant="secondary" disabled={consultando !== null} onClick={() => void abrir(item)} aria-label={`Editar ${item.nome}`}>{consultando === item.id ? "Carregando..." : "Editar"}</Button><Button variant="ghost" onClick={() => { setFormErro(""); setExclusao(item); }} aria-label={`Excluir usuário ${item.id}`}>Excluir</Button></div></li>)}</ul>}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-cream-50/70 px-4 py-3 sm:px-5"><p className="text-[11px] text-muted">{loading ? "Carregando..." : `${rows.length} usuário(s) nesta página`}</p><div className="flex gap-2"><Button variant="secondary" disabled={loading || offset === 0} onClick={() => { setLoading(true); setErro(""); setOffset(v => Math.max(0, v - limite)); }}>Anterior</Button><Button variant="secondary" disabled={loading || !!erro || rows.length < limite} onClick={() => { setLoading(true); setErro(""); setOffset(v => v + limite); }}>Próxima</Button></div></div>
     </Card>
-    <Dialog open={modal} onClose={() => { if (!salvando) { setModal(false); setForm(vazio); } }} title={editando ? "Editar usuário" : "Novo usuário"}><form onSubmit={salvar} className="space-y-4"><p className="text-[11px] text-muted">{editando ? "Atualize os dados do usuário. Deixe a senha em branco para mantê-la." : "Preencha os dados de acesso do usuário."}</p>{formErro && <p role="alert" className="rounded-lg border border-critical-border bg-critical-bg p-3 text-[11px] text-critical-text">{formErro}</p>}<Input label="Nome" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required disabled={salvando} /><Input label="E-mail" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required disabled={salvando} /><Input label={editando ? "Nova senha (opcional)" : "Senha"} type="password" autoComplete="new-password" value={form.senha} onChange={e => setForm({ ...form, senha: e.target.value })} required={!editando} disabled={salvando} /><Select label="Situação" value={String(form.ativo)} onChange={e => setForm({ ...form, ativo: e.target.value === "true" })} disabled={salvando}><option value="true">Ativo</option><option value="false">Inativo</option></Select><fieldset className="space-y-3 border-t border-line pt-4"><legend className="px-1 text-sm font-semibold">Perfil profissional (opcional)</legend><p className="text-[11px] text-muted">Informe os dados disponíveis. As chaves identificam arquivos já armazenados.</p><div className="grid gap-4 sm:grid-cols-2">
+    <Dialog open={modal} onClose={() => { if (!salvando) { setModal(false); setForm(vazio); } }} title={editando ? "Editar usuário" : "Novo usuário"}><form onSubmit={salvar} className="space-y-4"><p className="text-[11px] text-muted">{editando ? "Atualize os dados do usuário. Deixe a senha em branco para mantê-la." : "Preencha os dados de acesso do usuário."}</p>{formErro && <p role="alert" className="rounded-lg border border-critical-border bg-critical-bg p-3 text-[11px] text-critical-text">{formErro}</p>}<Input label="Nome" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required disabled={salvando} /><Input label="E-mail" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required disabled={salvando} /><Input label={editando ? "Nova senha (opcional)" : "Senha"} type="password" autoComplete="new-password" value={form.senha} onChange={e => setForm({ ...form, senha: e.target.value })} required={!editando} disabled={salvando} /><Select label="Situação" value={String(form.ativo)} onChange={e => setForm({ ...form, ativo: e.target.value === "true" })} disabled={salvando}><option value="true">Ativo</option><option value="false">Inativo</option></Select><fieldset className="space-y-3 border-t border-line pt-4"><legend className="px-1 text-sm font-semibold">Perfil profissional (opcional)</legend><p className="text-[11px] text-muted">Informe os dados disponíveis. As chaves identificam arquivos já armazenados.</p>{editando && temPerfil && <div className="flex justify-end"><Button type="button" variant="ghost" disabled={salvando} onClick={() => { setPerfilErro(""); setRemoverPerfil(true); }}>Remover perfil profissional</Button></div>}{perfilErro && <p role="alert" className="text-[11px] text-critical-text">{perfilErro}</p>}<div className="grid gap-4 sm:grid-cols-2">
       <Select label="Tipo profissional" disabled={salvando} value={form.perfil.tipo_profissional} onChange={e => setForm({ ...form, perfil: { ...form.perfil, tipo_profissional: e.target.value } })}>
         <option value="">Selecione</option>
         <option value="TECNICO_SST">Técnico de SST</option>
@@ -144,6 +158,11 @@ export function Usuarios() {
       <p className="text-sm">Deseja excluir o usuário {exclusao?.nome} (ID {exclusao?.id})?</p>
       {formErro && <p role="alert" className="mt-3 text-sm text-critical-text">{formErro}</p>}
       <div className="mt-5 flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setExclusao(null)}>Voltar</Button><Button disabled={salvando} onClick={() => void excluir()}>{salvando ? "Excluindo..." : "Confirmar exclusão"}</Button></div>
+    </Dialog>
+    <Dialog open={removerPerfil} onClose={() => { if (!salvando) setRemoverPerfil(false); }} title="Remover perfil profissional">
+      <p className="text-sm">Deseja remover o perfil profissional do usuário {editando?.nome} (ID {editando?.id})? O usuário e seus dados de acesso serão mantidos.</p>
+      {perfilErro && <p role="alert" className="mt-3 text-sm text-critical-text">{perfilErro}</p>}
+      <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setRemoverPerfil(false)}>Voltar</Button><Button disabled={salvando} onClick={() => void removerPerfilProfissional()}>{salvando ? "Removendo..." : "Confirmar remoção"}</Button></div>
     </Dialog>
   </>;
 }
