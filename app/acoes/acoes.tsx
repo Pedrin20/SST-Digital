@@ -1,4 +1,5 @@
 "use client";
+import { SeletorRelacionamento, useOpcoesRelacionamento } from "@/src/components/seletor-relacionamento";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Card, Dialog, EmptyState, Input, PageHeader, Select, Textarea } from "@/src/components/ui";
@@ -33,6 +34,8 @@ export function Acoes() {
   const [modal, setModal] = useState(false), [editando, setEditando] = useState<number | null>(null), [form, setForm] = useState(vazio);
   const [cancelamento, setCancelamento] = useState<Acao | null>(null), [salvando, setSalvando] = useState(false), [consultando, setConsultando] = useState<number | null>(null);
   const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
+  const opcoesPerigos = useOpcoesRelacionamento("perigos");
+  const opcoesUsuarios = useOpcoesRelacionamento("usuarios");
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ limit: "50", offset: String(offset) });
@@ -99,8 +102,8 @@ export function Acoes() {
     </div>
     <Card className="overflow-hidden">
       <form className="grid grid-cols-1 items-end gap-3 border-b border-line p-5 sm:grid-cols-2 xl:flex xl:flex-wrap" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltros(entrada); recarregar(); }}>
-        <Input label="ID do perigo" type="number" min="1" step="1" value={entrada.perigo_id} onChange={e => setEntrada({ ...entrada, perigo_id: e.target.value })} placeholder="Todos" />
-        <Input label="ID do responsável" type="number" min="1" step="1" value={entrada.responsavel_id} onChange={e => setEntrada({ ...entrada, responsavel_id: e.target.value })} placeholder="Todos" />
+        <SeletorRelacionamento label="Perigo" fonte={opcoesPerigos} value={entrada.perigo_id} onChange={id => setEntrada({ ...entrada, perigo_id: id })} placeholder="Todos" />
+        <SeletorRelacionamento label="Responsável" fonte={opcoesUsuarios} value={entrada.responsavel_id} onChange={id => setEntrada({ ...entrada, responsavel_id: id })} placeholder="Todos" />
         <Select label="Prioridade" value={entrada.prioridade} onChange={e => setEntrada({ ...entrada, prioridade: e.target.value })}><option value="">Todas</option>{opcoesPrioridade}</Select>
         <Select label="Status" value={entrada.status} onChange={e => setEntrada({ ...entrada, status: e.target.value })}><option value="">Todos</option>{opcoesStatus}</Select>
         <Button type="submit" variant="secondary">Aplicar filtros</Button><Button variant="ghost" onClick={() => { setEntrada(filtrosVazios); setFiltros(filtrosVazios); setOffset(0); recarregar(); }}>Limpar</Button>
@@ -111,8 +114,7 @@ export function Acoes() {
     <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title={editando === null ? "Nova ação" : "Editar ação"}>
       <form onSubmit={salvar} className="space-y-4">
         {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
-        <div className="grid gap-4 sm:grid-cols-2"><Input label="ID do perigo" type="number" min="1" step="1" required disabled={salvando} value={form.perigo_id} error={fields.perigo_id?.[0]} onChange={e => setForm({ ...form, perigo_id: e.target.value })} /><Input label="ID do responsável" type="number" min="1" step="1" required disabled={salvando} value={form.responsavel_id} error={fields.responsavel_id?.[0]} onChange={e => setForm({ ...form, responsavel_id: e.target.value })} /></div>
-        <p className="text-xs text-muted">Use os identificadores dos cadastros de Perigos e Usuários.</p>
+        <div className="grid gap-4 sm:grid-cols-2"><SeletorRelacionamento label="Perigo" fonte={opcoesPerigos} required disabled={salvando} value={form.perigo_id} error={fields.perigo_id?.[0]} onChange={id => setForm({ ...form, perigo_id: id })} /><SeletorRelacionamento label="Responsável" fonte={opcoesUsuarios} required disabled={salvando} value={form.responsavel_id} error={fields.responsavel_id?.[0]} onChange={id => setForm({ ...form, responsavel_id: id })} /></div>
         <Select label="Prioridade" value={form.prioridade} disabled={salvando} error={fields.prioridade?.[0]} onChange={e => setForm({ ...form, prioridade: e.target.value })}><option value="">Sem classificação</option>{opcoesPrioridade}</Select>
         <Textarea label="Descrição da ação" required disabled={salvando} value={form.descricao} error={fields.descricao?.[0]} onChange={e => setForm({ ...form, descricao: e.target.value })} placeholder="Descreva a medida a ser executada" />
         <div className="grid gap-4 sm:grid-cols-2"><Input label="Prazo" type="date" required disabled={salvando} value={form.prazo} error={fields.prazo?.[0]} onChange={e => setForm({ ...form, prazo: e.target.value })} /><Select label="Status" required disabled={salvando} value={form.status} error={fields.status?.[0]} onChange={e => setForm({ ...form, status: e.target.value })}>{opcoesStatus}</Select></div>

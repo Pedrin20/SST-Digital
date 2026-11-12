@@ -1,9 +1,7 @@
 # Avaliações de risco
 
-A tela usa GET e POST em `/api/avaliacoes-risco` e GET em `/api/avaliacoes-risco/{id}`. A lista aceita filtro por ID do perigo e paginação de 50 registros.
+O cadastro envia apenas `perigo_id`, `probabilidade` e `severidade`. Os dois valores da matriz são inteiros de 1 a 5. A API calcula a pontuação e determina o nível conforme as faixas da empresa.
 
-O cadastro solicita `perigo_id` (inteiro positivo), `probabilidade` e `severidade` (inteiros de 1 a 5). A prévia da pontuação multiplica os dois fatores. Na API com matriz por empresa, o servidor determina a classe e a versão do método.
+A lista e os detalhes exibem `pontuacao_risco`, `nivel_risco` e o `tipo_risco` do perigo. Os quatro níveis são Baixo, Médio, Alto e Muito alto. O tipo aparece como “Não informado” para perigos antigos sem tipo cadastrado.
 
-Quando a API responde 400 indicando que faltam os textos `classificacao` e `metodo_versao`, o formulário mantém os valores e solicita os dois campos. No envio seguinte, o proxy só encaminha esses textos se o backend ainda devolver a mesma recusa de validação ao receber o payload automático.
-
-A lista e os detalhes exibem a pontuação e a classificação retornadas. O dashboard usa o mesmo indicador. As quatro classes da matriz são Baixo (verde), Médio (amarelo), Alto (laranja) e Muito alto (vermelho). As faixas são configuráveis por empresa. Registros históricos conservam a classificação e o método gravados, inclusive texto livre e valores decimais.
+O filtro por perigo é encaminhado à API. Os filtros de nível e tipo percorrem os resultados paginados para compor páginas de até 50 avaliações correspondentes.

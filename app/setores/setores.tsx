@@ -1,4 +1,5 @@
 "use client";
+import { SeletorRelacionamento, useOpcoesRelacionamento } from "@/src/components/seletor-relacionamento";
 import { buscarPagina, type VinculoEstrutura } from "@/src/lib/estrutura";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
@@ -24,6 +25,7 @@ export function Setores({ contexto }: { contexto?: VinculoEstrutura }) {
   const [exclusao, setExclusao] = useState<Setor | null>(null);
   const [salvando, setSalvando] = useState(false), [consultando, setConsultando] = useState<number | null>(null);
   const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
+  const opcoesUnidades = useOpcoesRelacionamento("unidades", !contexto || (modal && editando !== null));
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ limit: "50", offset: String(offset) });
@@ -73,7 +75,7 @@ export function Setores({ contexto }: { contexto?: VinculoEstrutura }) {
     <Card className="overflow-hidden">
       <form className="grid gap-3 border-b border-line p-4 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltros({ unidade, situacao, nome }); recarregar(); }}>
         <Input label="Buscar setor por nome" type="search" value={nome} onChange={e => setNome(e.target.value)} />
-        {!contexto && <Input label="Filtrar por ID da unidade" type="number" min="1" step="1" value={unidade} onChange={e => setUnidade(e.target.value)} placeholder="Todas as unidades" />}
+        {!contexto && <SeletorRelacionamento label="Unidade" fonte={opcoesUnidades} value={unidade} onChange={id => setUnidade(id)} placeholder="Todas as unidades" />}
         <Select label="Situação" value={situacao} onChange={e => setSituacao(e.target.value)}><option value="">Todas</option><option value="true">Ativos</option><option value="false">Inativos</option></Select>
         <Button type="submit" variant="secondary">Aplicar filtros</Button>
         <Button variant="ghost" onClick={() => { setUnidade(idContexto); setNome(""); setSituacao(""); setFiltros({ unidade: idContexto, situacao: "", nome: "" }); setOffset(0); recarregar(); }}>Limpar</Button>
@@ -97,7 +99,7 @@ export function Setores({ contexto }: { contexto?: VinculoEstrutura }) {
     <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title={editando === null ? "Novo setor" : "Editar setor"}>
       <form onSubmit={salvar} className="space-y-4">
         {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
-        {contexto && editando === null ? <Input label="Unidade" value={contexto.nome} readOnly /> : <Input label="ID da unidade" type="number" min="1" step="1" required disabled={salvando} value={form.unidade_id} error={fields.unidade_id?.[0]} onChange={e => setForm({ ...form, unidade_id: e.target.value })} />}
+        {contexto && editando === null ? <Input label="Unidade" value={`${contexto.id} — ${contexto.nome}`} readOnly /> : <SeletorRelacionamento label="Unidade" fonte={opcoesUnidades} required disabled={salvando} value={form.unidade_id} error={fields.unidade_id?.[0]} onChange={id => setForm({ ...form, unidade_id: id })} />}
         <Input label="Nome do setor" required disabled={salvando} value={form.nome} error={fields.nome?.[0]} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Usinagem" />
         <Select label="Situação" disabled={salvando} value={String(form.ativo)} error={fields.ativo?.[0]} onChange={e => setForm({ ...form, ativo: e.target.value === "true" })}><option value="true">Ativa</option><option value="false">Inativa</option></Select>
         <div className="flex justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar setor"}</Button></div>

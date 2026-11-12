@@ -1,12 +1,15 @@
 import { z } from "zod";
+import { tiposDeRisco } from "../avaliacoes-risco/risco";
 export const perigoPayload = z.object({
   setor_id: z.number().int().positive("Informe um ID de setor válido."),
+  tipo_risco: z.enum(tiposDeRisco),
   descricao: z.string().trim().min(1, "Informe a descrição do perigo."),
   fonte: z.string().trim(),
   consequencias: z.string().trim(),
 }).strict();
 export const perigoPatch = perigoPayload.partial().refine(value => Object.keys(value).length > 0, "Informe ao menos um campo.");
 export const perigoSchema = perigoPayload.extend({
+  tipo_risco: z.enum(tiposDeRisco).nullable(),
   id: z.coerce.number().int().positive(), setor_id: z.coerce.number().int().positive(),
   fonte: z.string().nullable().transform(value => value ?? ""),
   consequencias: z.string().nullable().transform(value => value ?? ""),

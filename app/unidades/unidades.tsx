@@ -1,4 +1,5 @@
 "use client";
+import { SeletorRelacionamento, useOpcoesRelacionamento } from "@/src/components/seletor-relacionamento";
 import Link from "next/link";
 import { buscarPagina, setoresHref, type VinculoEstrutura } from "@/src/lib/estrutura";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
@@ -26,6 +27,7 @@ export function Unidades({ contexto }: { contexto?: VinculoEstrutura }) {
   const [exclusao, setExclusao] = useState<Unidade | null>(null);
   const [salvando, setSalvando] = useState(false), [consultando, setConsultando] = useState<number | null>(null);
   const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
+  const opcoesEmpresas = useOpcoesRelacionamento("empresas", !contexto || (modal && editando !== null));
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ limit: "50", offset: String(offset) });
@@ -75,7 +77,7 @@ export function Unidades({ contexto }: { contexto?: VinculoEstrutura }) {
     <Card className="overflow-hidden">
       <form className="grid gap-3 border-b border-line p-4 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltros({ empresa, situacao, nome }); recarregar(); }}>
         <Input label="Buscar unidade por nome" type="search" value={nome} onChange={e => setNome(e.target.value)} />
-        {!contexto && <Input label="Filtrar por ID da empresa" type="number" min="1" step="1" value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder="Todas as empresas" />}
+        {!contexto && <SeletorRelacionamento label="Empresa" fonte={opcoesEmpresas} value={empresa} onChange={id => setEmpresa(id)} placeholder="Todas as empresas" />}
         <Select label="Situação" value={situacao} onChange={e => setSituacao(e.target.value)}><option value="">Todas</option><option value="true">Ativas</option><option value="false">Inativas</option></Select>
         <Button type="submit" variant="secondary">Aplicar filtros</Button>
         <Button variant="ghost" onClick={() => { setEmpresa(idContexto); setNome(""); setSituacao(""); setFiltros({ empresa: idContexto, situacao: "", nome: "" }); setOffset(0); recarregar(); }}>Limpar</Button>
@@ -101,7 +103,7 @@ export function Unidades({ contexto }: { contexto?: VinculoEstrutura }) {
     <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title={editando === null ? "Nova unidade" : "Editar unidade"}>
       <form onSubmit={salvar} className="space-y-4">
         {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
-        {contexto && editando === null ? <Input label="Empresa" value={contexto.nome} readOnly /> : <Input label="ID da empresa" type="number" min="1" step="1" required disabled={salvando} value={form.empresa_id} error={fields.empresa_id?.[0]} onChange={e => setForm({ ...form, empresa_id: e.target.value })} />}
+        {contexto && editando === null ? <Input label="Empresa" value={`${contexto.id} — ${contexto.nome}`} readOnly /> : <SeletorRelacionamento label="Empresa" fonte={opcoesEmpresas} required disabled={salvando} value={form.empresa_id} error={fields.empresa_id?.[0]} onChange={id => setForm({ ...form, empresa_id: id })} />}
         <Input label="Nome da unidade" required disabled={salvando} value={form.nome} error={fields.nome?.[0]} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Unidade Industrial Maracanaú" />
         <Input label="Endereço" disabled={salvando} value={form.endereco} error={fields.endereco?.[0]} onChange={e => setForm({ ...form, endereco: e.target.value })} placeholder="Rua ou avenida" />
         <div className="grid gap-4 sm:grid-cols-2">

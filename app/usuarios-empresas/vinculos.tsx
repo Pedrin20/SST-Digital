@@ -1,7 +1,8 @@
 "use client";
+import { SeletorRelacionamento, useOpcoesRelacionamento } from "@/src/components/seletor-relacionamento";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
-import { Button, Card, Dialog, EmptyState, Input, PageHeader, Select } from "@/src/components/ui";
+import { Button, Card, Dialog, EmptyState, PageHeader, Select } from "@/src/components/ui";
 import { lerLista, vinculoPayload, type Vinculo } from "@/src/lib/usuarios-empresas/schema";
 
 const vazio = { usuario_id: "", empresa_id: "", perfil: "ADMIN" };
@@ -20,6 +21,8 @@ export function Vinculos() {
   const [modal, setModal] = useState(false), [editando, setEditando] = useState<Vinculo | null>(null), [form, setForm] = useState(vazio);
   const [remocao, setRemocao] = useState<Vinculo | null>(null), [salvando, setSalvando] = useState(false);
   const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
+  const opcoesUsuarios = useOpcoesRelacionamento("usuarios", modal);
+  const opcoesEmpresas = useOpcoesRelacionamento("empresas", modal);
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ limit: "50", offset: String(offset) });
@@ -62,8 +65,7 @@ export function Vinculos() {
     <Dialog open={modal && autorizado} onClose={() => { if (!salvando) setModal(false); }} title={editando ? "Alterar perfil do vínculo" : "Novo vínculo"}>
       <form onSubmit={salvar} className="space-y-4">
         {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
-        <div className="grid gap-4 sm:grid-cols-2"><Input label="ID do usuário" type="number" min="1" step="1" required disabled={salvando || !!editando} value={form.usuario_id} error={fields.usuario_id?.[0]} onChange={e => setForm({ ...form, usuario_id: e.target.value })} /><Input label="ID da empresa" type="number" min="1" step="1" required disabled={salvando || !!editando} value={form.empresa_id} error={fields.empresa_id?.[0]} onChange={e => setForm({ ...form, empresa_id: e.target.value })} /></div>
-        <p className="text-xs text-muted">Use os identificadores dos cadastros de Usuários e Empresas.</p>
+        <div className="grid gap-4 sm:grid-cols-2"><SeletorRelacionamento label="Usuário" fonte={opcoesUsuarios} required disabled={salvando || !!editando} value={form.usuario_id} error={fields.usuario_id?.[0]} onChange={id => setForm({ ...form, usuario_id: id })} /><SeletorRelacionamento label="Empresa" fonte={opcoesEmpresas} required disabled={salvando || !!editando} value={form.empresa_id} error={fields.empresa_id?.[0]} onChange={id => setForm({ ...form, empresa_id: id })} /></div>
         <Select label="Perfil" required disabled={salvando} value={form.perfil} error={fields.perfil?.[0]} onChange={e => setForm({ ...form, perfil: e.target.value })}>
           <option value="ADMIN">Administrador</option>
           <option value="GESTOR">Gestor</option>

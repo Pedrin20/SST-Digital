@@ -1,10 +1,16 @@
 "use client";
+import { SeletorRelacionamento, useOpcoesRelacionamento } from "@/src/components/seletor-relacionamento";
 import { fetchComDiagnosticoDelete } from "@/src/lib/delete-diagnostics";
 import { useEffect, useState, type FormEvent } from "react";
-import { Button, Card, Dialog, EmptyState, Input, Select, PageHeader } from "@/src/components/ui";
+import { Button, Card, Dialog, EmptyState, Select, PageHeader } from "@/src/components/ui";
 import { ClassificacaoRisco, gruposDeRisco } from "@/src/components/classificacao-risco";
-import { avaliacaoPayload, avaliacaoLegadaPayload, exigeCamposLegados, lerDetalhe, lerLista, type Avaliacao } from "@/src/lib/avaliacoes-risco/schema";
+import { tiposDeRisco, rotulosTipo, niveisDeRisco, rotulosNivel, paginaDeAvaliacoes } from "@/src/lib/avaliacoes-risco/risco";
+import { avaliacaoPayload, lerDetalhe, lerLista, type Avaliacao } from "@/src/lib/avaliacoes-risco/schema";
 const vazio = { perigo_id: "", probabilidade: "", severidade: "" };
+const filtrosVazios = { perigo: "", nivel: "", tipo: "" };
+const colunas = ["Avaliação (ID)", "Perigo (ID)", "Probabilidade", "Severidade", "Pontuação / Nível", "Tipo de risco"] as const;
+const opcoesNivel = niveisDeRisco.map(nome => <option key={nome} value={nome}>{rotulosNivel[nome]}</option>);
+const opcoesTipo = tiposDeRisco.map(nome => <option key={nome} value={nome}>{rotulosTipo[nome]}</option>);
 const numero = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 20 });
 class RequestError extends Error {
   constructor(message: string, public fields: Record<string, string[]> = {}) { super(message); }
@@ -15,23 +21,23 @@ async function request(url: string, options?: RequestInit): Promise<unknown> {
   return data;
 }
 export function Avaliacoes() {
-  const [legado, setLegado] = useState<{ classificacao: string; metodo_versao: string } | null>(null);
-  const grupoSelecionado = gruposDeRisco.find(grupo => grupo.nome === legado?.classificacao);
   const [rows, setRows] = useState<Avaliacao[]>([]), [loading, setLoading] = useState(true), [erro, setErro] = useState("");
-  const [perigo, setPerigo] = useState(""), [filtro, setFiltro] = useState("");
+  const [entrada, setEntrada] = useState(filtrosVazios), [filtro, setFiltro] = useState(filtrosVazios);
   const [offset, setOffset] = useState(0), [versao, setVersao] = useState(0);
   const [modal, setModal] = useState(false), [form, setForm] = useState(vazio), [detalhe, setDetalhe] = useState<Avaliacao | null>(null);
   const [salvando, setSalvando] = useState(false), [consultando, setConsultando] = useState<number | null>(null);
   const [exclusao, setExclusao] = useState<Avaliacao | null>(null), [erroExclusao, setErroExclusao] = useState("");
   const [formErro, setFormErro] = useState(""), [fields, setFields] = useState<Record<string, string[]>>({}), [aviso, setAviso] = useState("");
+  const opcoesPerigos = useOpcoesRelacionamento("perigos");
   useEffect(() => {
     const controller = new AbortController();
-    const query = new URLSearchParams({ limit: "50", offset: String(offset) });
-    if (filtro) query.set("perigo_id", filtro);
-    request(`/api/avaliacoes-risco?${query}`, { signal: controller.signal }).then(data => {
-      if (controller.signal.aborted) return;
-      try { setRows(lerLista(data)); } catch { setRows([]); setErro("A resposta da API não corresponde aos dados esperados de avaliações de risco."); }
-    }).catch(error => { if (!controller.signal.aborted) { setRows([]); setErro(error.message); } }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    paginaDeAvaliacoes(offset, filtro, async inicio => {
+      const query = new URLSearchParams({ limit: "50", offset: String(inicio) });
+      if (filtro.perigo) query.set("perigo_id", filtro.perigo);
+      const data = await request(`/api/avaliacoes-risco?${query}`, { signal: controller.signal });
+      try { return lerLista(data); }
+      catch { throw new Error("A resposta da API não corresponde aos dados esperados de avaliações de risco."); }
+    }).then(pagina => { if (!controller.signal.aborted) setRows(pagina); }).catch(error => { if (!controller.signal.aborted) { setRows([]); setErro(error.message); } }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [filtro, offset, versao]);
   function recarregar() { setErro(""); setLoading(true); setVersao(v => v + 1); }
@@ -45,7 +51,7 @@ export function Avaliacoes() {
   async function salvar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (salvando) return;
     const valores = { perigo_id: Number(form.perigo_id), probabilidade: Number(form.probabilidade), severidade: Number(form.severidade) };
-    const parsed = legado ? avaliacaoLegadaPayload.safeParse({ ...valores, ...legado }) : avaliacaoPayload.safeParse(valores);
+    const parsed = avaliacaoPayload.safeParse(valores);
     if (!parsed.success) {
       const errors: Record<string, string[]> = parsed.error.flatten().fieldErrors;
       for (const key of ["probabilidade", "severidade"] as const) if (errors[key]) errors[key] = ["Selecione um valor de 1 a 5."];
@@ -56,13 +62,8 @@ export function Avaliacoes() {
       await request("/api/avaliacoes-risco", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
       setModal(false); setAviso("Avaliação cadastrada com sucesso."); setOffset(0); recarregar();
     } catch (error) {
-      if (!legado && error instanceof RequestError && exigeCamposLegados(error.fields)) {
-        setLegado({ classificacao: "", metodo_versao: "" });
-        setFormErro("Para concluir o cadastro nesta versão da API, informe a classificação e o método adotados pela empresa.");
-      } else {
-        setFormErro(error instanceof Error ? error.message : "Não foi possível cadastrar.");
-        if (error instanceof RequestError) setFields(error.fields);
-      }
+      setFormErro(error instanceof Error ? error.message : "Não foi possível cadastrar.");
+      if (error instanceof RequestError) setFields(error.fields);
     }
     finally { setSalvando(false); }
   }
@@ -74,17 +75,19 @@ export function Avaliacoes() {
     finally { setSalvando(false); }
   }
   return <>
-    <PageHeader title="Avaliações de risco" description="Registre a avaliação de cada perigo conforme o método adotado pela empresa." actions={<Button disabled={consultando !== null} onClick={() => { setForm({ ...vazio, perigo_id: filtro }); setLegado(null); setFields({}); setFormErro(""); setModal(true); }}>Nova avaliação</Button>} />
+    <PageHeader title="Avaliações de risco" description="Registre a avaliação de cada perigo conforme o método adotado pela empresa." actions={<Button disabled={consultando !== null} onClick={() => { setForm({ ...vazio, perigo_id: filtro.perigo }); setFields({}); setFormErro(""); setModal(true); }}>Nova avaliação</Button>} />
     {aviso && <p role="status" className="mb-4 text-sm">{aviso}</p>}
     <Card className="overflow-hidden">
-      <form className="flex flex-wrap items-end gap-3 border-b border-line p-5" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltro(perigo); recarregar(); }}>
-        <Input label="Filtrar por ID do perigo" type="number" min="1" step="1" value={perigo} onChange={e => setPerigo(e.target.value)} placeholder="Todos os perigos" />
-        <Button type="submit" variant="secondary">Aplicar filtro</Button><Button variant="ghost" onClick={() => { setPerigo(""); setFiltro(""); setOffset(0); recarregar(); }}>Limpar</Button>
+      <form className="grid min-w-0 items-end gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_auto]" onSubmit={e => { e.preventDefault(); setOffset(0); setFiltro(entrada); recarregar(); }}>
+        <SeletorRelacionamento label="Perigo" fonte={opcoesPerigos} value={entrada.perigo} onChange={id => setEntrada({ ...entrada, perigo: id })} placeholder="Todos os perigos" />
+        <Select label="Pontuação / Nível" value={entrada.nivel} onChange={e => setEntrada({ ...entrada, nivel: e.target.value })}><option value="">Todos os níveis</option>{opcoesNivel}</Select>
+        <Select label="Tipo de risco" value={entrada.tipo} onChange={e => setEntrada({ ...entrada, tipo: e.target.value })}><option value="">Todos os tipos</option>{opcoesTipo}</Select>
+        <div className="flex flex-wrap gap-2"><Button type="submit" variant="secondary">Aplicar filtro</Button><Button variant="ghost" onClick={() => { setEntrada(filtrosVazios); setFiltro(filtrosVazios); setOffset(0); recarregar(); }}>Limpar</Button></div>
       </form>
       {loading ? <p role="status" className="p-6 text-sm text-muted">Carregando avaliações...</p> : erro ? <div role="alert" className="space-y-3 p-6 text-sm text-critical-text"><p>{erro}</p><Button variant="secondary" onClick={recarregar}>Tentar novamente</Button></div> : rows.length === 0 ? <EmptyState title="Nenhuma avaliação encontrada" description="Ajuste o filtro ou cadastre uma avaliação." /> : <table className="block w-full text-left text-sm xl:table">
         <caption className="sr-only">Avaliações de risco cadastradas</caption>
         <thead className="sr-only bg-cream-50 text-xs text-muted xl:not-sr-only xl:table-header-group"><tr>
-          {["Avaliação(ID)", "Perigo(ID)", "Probabilidade", "Severidade","Pontuação", "Classificação de Risco", "Método / versão", "Ações"].map(t =>
+          {[...colunas, "Ações"].map(t =>
             <th key={t} scope="col" className="px-3 py-4">{t}</th>)}
         </tr></thead>
         <tbody className="block divide-y divide-line xl:table-row-group">{rows.map(item =>
@@ -107,8 +110,7 @@ export function Avaliacoes() {
     <Dialog open={modal} onClose={() => { if (!salvando) setModal(false); }} title="Nova avaliação de risco">
       <form onSubmit={salvar} className="space-y-4">
         {formErro && <p role="alert" className="text-sm text-critical-text">{formErro}</p>}
-        <Input label="ID do perigo" type="number" min="1" step="1" required disabled={salvando} value={form.perigo_id} error={fields.perigo_id?.[0]} onChange={e => setForm({ ...form, perigo_id: e.target.value })} />
-        <p className="text-xs text-muted">Use o identificador exibido no cadastro de Perigos.</p>
+        <SeletorRelacionamento label="Perigo" fonte={opcoesPerigos} required disabled={salvando} value={form.perigo_id} error={fields.perigo_id?.[0]} onChange={id => setForm({ ...form, perigo_id: id })} />
         <div className="grid gap-4 sm:grid-cols-2">
           {(["probabilidade", "severidade"] as const).map(key =>
             <Select key={key} label={key === "probabilidade" ? "Probabilidade" : "Severidade"} required
@@ -117,19 +119,6 @@ export function Avaliacoes() {
               {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
             </Select>)}
         </div>
-        <div className="rounded-lg bg-cream-50 p-3 text-sm">
-          {!legado && <p className="mt-1 text-xs text-muted">A classificação segue o método vigente da empresa do perigo.</p>}
-        </div>
-        {legado && <div className="grid gap-4 sm:grid-cols-2">
-          <Select label="Classificação" required disabled={salvando} value={legado.classificacao}
-            style={grupoSelecionado && { backgroundColor: grupoSelecionado.fundo, borderInlineStart: `5px solid ${grupoSelecionado.cor}` }}
-            error={fields.classificacao?.[0]} onChange={e => setLegado({ ...legado, classificacao: e.target.value })}>
-            <option value="">Selecione o grupo</option>
-            {gruposDeRisco.map(grupo => <option key={grupo.nome} value={grupo.nome} style={{ backgroundColor: grupo.fundo, color: "#18212A" }}>{grupo.nome}</option>)}
-          </Select>
-          <Input label="Métodologia / versão" required maxLength={100} disabled={salvando} value={legado.metodo_versao}
-            error={fields.metodo_versao?.[0]} onChange={e => setLegado({ ...legado, metodo_versao: e.target.value })} />
-        </div>}
         <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-4"><Button variant="secondary" disabled={salvando} onClick={() => setModal(false)}>Cancelar</Button><Button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Cadastrar avaliação"}</Button></div>
       </form>
     </Dialog>
@@ -146,12 +135,13 @@ export function Avaliacoes() {
 }
 
 function valoresAvaliacao(item: Avaliacao): [string, React.ReactNode][] {
+  const grupo = item.tipo_risco && gruposDeRisco[item.tipo_risco];
   return [
-    ["Avaliação", `#${item.id}`],
-    ["Perigo", `#${item.perigo_id}`],
-    ["Probabilidade", numero(item.probabilidade)],
-    ["Severidade", numero(item.severidade)],
-    ["Classificação", <ClassificacaoRisco key="classe" avaliacao={item} />],
-    ["Método / versão", item.metodo_versao || "Não informado"],
+    [colunas[0], `#${item.id}`],
+    [colunas[1], `#${item.perigo_id}`],
+    [colunas[2], numero(item.probabilidade)],
+    [colunas[3], numero(item.severidade)],
+    [colunas[4], <span key="nivel" className="inline-flex items-center gap-2">{item.pontuacao_risco} <ClassificacaoRisco avaliacao={item} /></span>],
+    [colunas[5], grupo && item.tipo_risco ? <span key="grupo" style={{ backgroundColor: grupo.fundo }} className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs font-semibold"><span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: grupo.cor }} />{rotulosTipo[item.tipo_risco]}</span> : "Não informado"],
   ];
 }

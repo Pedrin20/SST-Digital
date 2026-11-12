@@ -33,3 +33,97 @@ for (const [arquivo, nome, label, valores] of casos) {
     assert.deepEqual(seletores.map(([, options]) => [...options.matchAll(/<option[^>]* value="([^"]*)"/g)].map(match => match[1])), valores);
   });
 }
+
+const { carregarOpcoes, SeletorRelacionamento } = require("../src/components/seletor-relacionamento.tsx");
+
+test("perigos de páginas seguintes aparecem com ID e descrição", async t => {
+  const paginas = [
+    Array.from({ length: 50 }, (_, i) => ({ id: i + 1, descricao: "Ruído" })),
+    [{ id: "51", descricao: "Queda de altura" }],
+  ];
+  const chamadas = [];
+  t.mock.method(global, "fetch", async url => {
+    chamadas.push(url);
+    return Response.json({ perigos: paginas.shift() });
+  });
+  const lista = await carregarOpcoes("perigos", new AbortController().signal);
+  assert.deepEqual(chamadas, ["/api/perigos?limit=50&offset=0", "/api/perigos?limit=50&offset=50"]);
+  const html = renderToStaticMarkup(React.createElement(SeletorRelacionamento, {
+    label: "Perigo", fonte: { lista }, value: "51", onChange() {},
+  }));
+  assert.match(html, /<option value="51" selected="">51 — Queda de altura<\/option>/);
+});
+
+test("edição preserva o ID atual quando o cadastro relacionado não está na lista", () => {
+  const html = renderToStaticMarkup(React.createElement(SeletorRelacionamento, {
+    label: "Setor", fonte: { lista: { opcoes: [{ id: "1", nome: "Produção" }] } },
+    value: "7", onChange() {},
+  }));
+  assert.match(html, /<option value="7" selected="">ID 7 \(vínculo atual\)<\/option>/);
+  assert.match(html, /<option value="1">1 — Produção<\/option>/);
+});
+
+test("avaliação oferece nível e tipo somente nos filtros", () => {
+  const { Avaliacoes } = require("../app/avaliacoes-risco/avaliacoes.tsx");
+  const html = renderToStaticMarkup(React.createElement(Avaliacoes));
+  for (const [rotulo, valores] of [
+    ["Pontuação / Nível", ["BAIXO", "MEDIO", "ALTO", "MUITO_ALTO"]],
+    ["Tipo de risco", ["FISICO", "QUIMICO", "BIOLOGICO", "ERGONOMICO", "ACIDENTE"]],
+  ]) {
+    const selects = [...html.matchAll(new RegExp(`>${rotulo}</label><select[^>]*>(.*?)</select>`, "gs"))];
+    assert.equal(selects.length, 1);
+    for (const [, options] of selects) {
+      assert.deepEqual([...options.matchAll(/value="([^"]+)"/g)].map(m => m[1]), valores);
+    }
+  }
+});
+
+test("filtros combinados distinguem Alto e Muito alto entre páginas", async () => {
+  const { paginaDeAvaliacoes } = require("../src/lib/avaliacoes-risco/risco.ts");
+  const registro = { tipo_risco: "QUIMICO", nivel_risco: "MUITO_ALTO" };
+  const rows = await paginaDeAvaliacoes(0, { nivel: "MUITO_ALTO", tipo: "QUIMICO" }, async inicio =>
+    inicio === 0 ? Array(50).fill({ tipo_risco: "QUIMICO", nivel_risco: "ALTO" }) : [
+      { tipo_risco: null, nivel_risco: "MUITO_ALTO" }, registro,
+    ]);
+  assert.deepEqual(rows, [registro]);
+});
+
+test("cadastro aceita somente o perigo e dois inteiros da matriz", () => {
+  const { avaliacaoPayload, lerDetalhe } = require("../src/lib/avaliacoes-risco/schema.ts");
+  const payload = { perigo_id: 42, probabilidade: 5, severidade: 4 };
+  assert.deepEqual(avaliacaoPayload.parse(payload), payload);
+  for (const valor of [0, 6, 1.5, "5"]) {
+    for (const campo of ["probabilidade", "severidade"]) {
+      assert.equal(avaliacaoPayload.safeParse({ ...payload, [campo]: valor }).success, false);
+    }
+  }
+  assert.equal(avaliacaoPayload.safeParse({ ...payload, nivel_risco: "ALTO" }).success, false);
+  const resposta = { ...payload, id: 1, pontuacao_risco: 20, nivel_risco: "MUITO_ALTO", tipo_risco: null };
+  assert.deepEqual(lerDetalhe({ data: resposta }), resposta);
+});
+
+test("lista mista preserva avaliações com texto histórico no nível", () => {
+  const { lerLista, lerDetalhe } = require("../src/lib/avaliacoes-risco/schema.ts");
+  const { ClassificacaoRisco } = require("../src/components/classificacao-risco.tsx");
+  const resposta = [
+    { id: 180002, perigo_id: 120002, probabilidade: 4, severidade: 5, tipo_risco: "FISICO", pontuacao_risco: 20, nivel_risco: "MUITO_ALTO" },
+    { id: 90001, perigo_id: 60001, probabilidade: 2, severidade: 4, tipo_risco: null, pontuacao_risco: 8, nivel_risco: "Químico" },
+    { id: 1, perigo_id: 1, probabilidade: 2, severidade: 3, tipo_risco: null, pontuacao_risco: 6, nivel_risco: "Exemplo didático" },
+  ];
+  const lista = lerLista(resposta);
+  assert.deepEqual(lista, resposta);
+  assert.deepEqual(lerDetalhe(resposta[1]), resposta[1]);
+  const rotulos = lista.map(avaliacao => renderToStaticMarkup(React.createElement(ClassificacaoRisco, { avaliacao })));
+  assert.match(rotulos[0], /Muito alto/);
+  assert.match(rotulos[1], /Nível legado.*Químico/);
+  assert.match(rotulos[2], /Nível legado.*Exemplo didático/);
+});
+
+test("perigo antigo aceita tipo nulo na leitura e permite definir o tipo na edição", () => {
+  const { perigoPayload, perigoPatch, lerDetalhe } = require("../src/lib/perigos/schema.ts");
+  const perigo = { setor_id: 1, descricao: "Ruído", fonte: "", consequencias: "", tipo_risco: null };
+  assert.equal(lerDetalhe({ id: 42, ...perigo }).tipo_risco, null);
+  assert.equal(perigoPayload.safeParse(perigo).success, false);
+  assert.equal(perigoPayload.safeParse({ ...perigo, tipo_risco: "FISICO" }).success, true);
+  assert.deepEqual(perigoPatch.parse({ tipo_risco: "FISICO" }), { tipo_risco: "FISICO" });
+});
