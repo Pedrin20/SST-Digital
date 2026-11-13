@@ -15,8 +15,3 @@ export async function PATCH(request: Request, { params }: Context) {
   if (!result.success) return NextResponse.json({ message: "Revise os dados da ação.", fields: result.error.flatten().fieldErrors }, { status: 400 });
   return encaminhar(`/acoes/${id}`, { method: "PATCH", body: JSON.stringify(result.data) });
 }
-export async function DELETE(_request: Request, { params }: Context) {
-  const { id } = await params;
-  if (!valid(id)) return NextResponse.json({ message: "ID inválido." }, { status: 400 });
-  return encaminhar(`/acoes/${id}`, { method: "DELETE" });
-}

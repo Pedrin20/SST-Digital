@@ -29,7 +29,7 @@ for (const [arquivo, nome, label, valores] of casos) {
   test(`${nome} oferece as opções da API para ${label}`, () => {
     const tela = require(`../app/${arquivo}.tsx`)[nome];
     const html = renderToStaticMarkup(React.createElement(tela));
-    const seletores = [...html.matchAll(new RegExp(`>${label}</label><select[^>]*>(.*?)</select>`, "gs"))];
+    const seletores = [...html.matchAll(new RegExp(`>${label}(?: \\*)?</label><select[^>]*>(.*?)</select>`, "gs"))];
     assert.deepEqual(seletores.map(([, options]) => [...options.matchAll(/<option[^>]* value="([^"]*)"/g)].map(match => match[1])), valores);
   });
 }
@@ -126,4 +126,25 @@ test("perigo antigo aceita tipo nulo na leitura e permite definir o tipo na edi�
   assert.equal(perigoPayload.safeParse(perigo).success, false);
   assert.equal(perigoPayload.safeParse({ ...perigo, tipo_risco: "FISICO" }).success, true);
   assert.deepEqual(perigoPatch.parse({ tipo_risco: "FISICO" }), { tipo_risco: "FISICO" });
+});
+
+test("quadro resolve nomes, ordena o prazo e só alerta em ações abertas", () => {
+  const { Visoes } = require("../app/acoes/visoes.tsx");
+  const item = { id: 1, perigo_id: 42, responsavel_id: 7, perigo_nome: "Incêndio", responsavel_nome: "Carlos Silva", prioridade: "P1", status: "PENDENTE", descricao: "Sinalizar corredor", prazo: "2026-11-20" };
+  const html = renderToStaticMarkup(React.createElement(Visoes, {
+    rows: [item, { ...item, id: 2, descricao: "Reparar alarme", prazo: "2026-11-11" },
+      { ...item, id: 3, status: "CONCLUIDA", prazo: "2026-11-01", concluida_em: "2026-11-02 11:00:00" },
+      { ...item, id: 4, status: "CANCELADA", prazo: "2026-11-02" }],
+    quadro: true, hoje: Date.UTC(2026,10,13), perigos: new Map(), usuarios: new Map(), opcoes: () => null,
+  }));
+  for (const texto of ["Incêndio", "Carlos Silva", ">CS<", "Vence em 7 dias", "Venceu há 2 dias", "02/11/2026"]) assert.ok(html.includes(texto), texto);
+  assert.equal((html.match(/Venceu há/g) || []).length, 1);
+  assert.ok(html.indexOf("Reparar alarme") < html.indexOf("Sinalizar corredor"));
+});
+
+test("cancelamento exige justificativa e permite anexar evidência junto com o status", () => {
+  const { acaoPatch } = require("../src/lib/acoes/schema.ts");
+  for (const motivo of [undefined, "", "   "]) assert.equal(acaoPatch.safeParse({ status: "CANCELADA", motivo_cancelamento: motivo }).success, false);
+  const dados = { status: "CANCELADA", motivo_cancelamento: "Medida substituída", evidencia: { tipo: "application/pdf", nome: "laudo.pdf", dados: "JVBERg==" } };
+  assert.deepEqual(acaoPatch.parse(dados), dados);
 });
