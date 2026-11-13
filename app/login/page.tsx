@@ -1,14 +1,26 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { Barlow_Condensed } from "next/font/google";
+import { Card } from "@/src/components/ui/card";
 import { LoginForm } from "./login-form";
 import "./login.css";
+
+const display = Barlow_Condensed({ subsets: ["latin"], weight: "800", display: "swap" });
 export const metadata: Metadata = { title: "Entrar — SST Digital" };
+
 export default function LoginPage() {
-  return <main className="login-page">
-    <section className="login-brand" aria-label="SST Digital — Segurança do trabalho">
-      <div className="login-logo"><Image src="/marca/logo-escuro.svg" alt="SST Digital" width={230} height={55} priority /></div>
-      <div className="login-pitch"><div className="login-stripes" aria-hidden="true" /><h2>Segurança do trabalho<br />organizada em um só lugar.</h2><p>Saiba o que está pendente, quem é responsável e quais<br className="hidden xl:block" /> medidas já foram executadas — sem planilhas espalhadas.</p><ul>{["Inspeções", "Perigos e riscos", "Ações preventivas", "EPIs e documentos"].map(label => <li key={label}>{label}</li>)}</ul></div>
-    </section>
-    <section className="login-access" aria-labelledby="login-title"><div className="login-content"><div className="login-mobile-logo"><Image src="/marca/logo-claro.svg" alt="SST Digital" width={210} height={50} priority /></div><h1 id="login-title">Acesse sua conta</h1><p className="login-intro">Entre para acompanhar inspeções, riscos e ações da sua empresa.</p><LoginForm /><p className="login-contact">Sua empresa ainda não usa? <a href="#login-support">Fale com a equipe</a></p><details id="login-support"><summary>Orientações de acesso</summary><p>Para contratar a plataforma, recuperar sua senha ou obter ajuda, entre em contato com o administrador de SST da sua empresa.</p></details></div><footer><span>© 2026 SST Digital</span><a href="#login-support">Precisa de ajuda?</a></footer></section>
-  </main>;
+  return (
+    <main className="login-stage relative isolate grid min-h-svh items-center overflow-hidden">
+
+      <div className="mx-auto grid w-full max-w-6xl items-center justify-items-center gap-8 px-6 py-10 md:px-10 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
+        <header className="text-center lg:justify-self-start lg:text-left">
+          <h1 className={display.className + " text-[clamp(3.5rem,9vw,7.5rem)] leading-[0.82] font-extrabold tracking-tight text-brand-900 uppercase"}>SST<br />Digital</h1>
+          <p className="mt-5 font-semibold text-ink md:text-lg">Cada risco mapeado. Cada ação no prazo.</p>
+        </header>
+        <Card aria-label="Acesso à conta" className="w-full max-w-[420px] px-7 py-10 md:px-10 lg:justify-self-end">
+          <LoginForm />
+          <p className="mt-8 text-center text-xs leading-relaxed text-muted">Contas criadas pelo administrador da sua empresa.<br />Para solicitar acesso, fale com ele.</p>
+        </Card>
+      </div>
+    </main>
+  );
 }

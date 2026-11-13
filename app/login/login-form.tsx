@@ -2,29 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import {
-  AlertTriangleIcon,
-
-  EyeIcon,
-  EyeOffIcon,
-
-
-} from "@/app/components/icons";
+import { Button } from "@/src/components/ui/button";
+import { AlertTriangleIcon, EyeIcon, EyeOffIcon } from "@/app/components/icons";
 
 type CampoDoFormulario = "email" | "senha" | "form";
 type ErrosDeCampo = Partial<Record<CampoDoFormulario, string[]>>;
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-const classesBase =
-  "h-11 w-full rounded-lg border bg-white pl-9 text-[12.5px] text-ink transition-colors placeholder:text-muted/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60";
-
+const rotulo = "block text-sm font-medium text-ink";
 function classesDoCampo(invalido: boolean, paddingDireita = "pr-3") {
-  return `${classesBase} ${paddingDireita} ${
-    invalido
-      ? "border-critical focus:border-critical"
-      : "border-line hover:border-cream-300 focus:border-brand-600"
-  }`;
+  return `h-11 w-full rounded-lg border bg-card pl-3 text-sm text-ink placeholder:text-muted focus-visible:border-brand-600 disabled:opacity-60 ${paddingDireita} ${invalido ? "border-critical" : "border-line hover:border-brand-200"}`;
 }
 
 export function LoginForm() {
@@ -97,7 +85,7 @@ export function LoginForm() {
   }
 
   return (
-    <form className="mt-6" noValidate onSubmit={entrar}>
+    <form className="space-y-6" noValidate onSubmit={entrar}>
       {erro ? (
         <div
           role="alert"
@@ -109,11 +97,10 @@ export function LoginForm() {
       ) : null}
 
       <div>
-        <label htmlFor="email" className="block text-[11px] font-medium text-ink">
-          E-mail corporativo
+        <label htmlFor="email" className={rotulo}>
+          E-mail
         </label>
         <div className="relative mt-1.5">
-          
           <input
             id="email"
             name="email"
@@ -121,7 +108,7 @@ export function LoginForm() {
             inputMode="email"
             autoComplete="username"
             spellCheck={false}
-            placeholder="nome@empresa.com.br"
+            placeholder="voce@empresa.com.br"
             value={email}
             disabled={enviando}
             aria-invalid={Boolean(erroEmail)}
@@ -138,11 +125,10 @@ export function LoginForm() {
       </div>
 
       <div className="mt-4">
-        <div className="login-password-label"><label htmlFor="senha" className="block text-[11px] font-medium text-ink">
+        <label htmlFor="senha" className={rotulo}>
           Senha
-        </label><a href="#login-support">Esqueci minha senha</a></div>
+        </label>
         <div className="relative mt-1.5">
-          
           <input
             id="senha"
             name="senha"
@@ -173,12 +159,9 @@ export function LoginForm() {
         ) : null}
       </div>
 
-      <label className="login-remember"><input type="checkbox" checked={manterConectado} onChange={e => setManterConectado(e.target.checked)} />Manter conectado neste dispositivo</label>
-      <button
-        type="submit"
-        disabled={enviando}
-        className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-900 px-4 text-[12.5px] font-semibold text-cream shadow-button transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <details className="text-right text-xs text-muted"><summary className="cursor-pointer font-medium text-brand-900 hover:underline">Esqueceu sua senha?</summary><p className="mt-2">Para recuperar o acesso, entre em contato com o administrador de SST da sua empresa.</p></details>
+      <label className="flex items-center gap-2 text-xs text-muted"><input className="accent-brand-900" type="checkbox" checked={manterConectado} onChange={e => setManterConectado(e.target.checked)} />Manter conectado neste dispositivo</label>
+      <Button type="submit" disabled={enviando} className="w-full">
         {enviando ? (
           <>
             <span
@@ -190,10 +173,9 @@ export function LoginForm() {
         ) : (
           <>
             Entrar
-            
           </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

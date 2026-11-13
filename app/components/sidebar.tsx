@@ -17,6 +17,7 @@ const navigation = [
   { label: "Avaliações de risco", href: "/avaliacoes-risco", icon: MatrixIcon },
   { label: "Ações", href: "/acoes", icon: PlanIcon },
   { label: "Equipamentos", href: "/equipamentos", icon: HelmetIcon },
+  { label: "Controle de EPI", href: "/epi", icon: ShieldCheckIcon },
   { label: "Documentos", href: "/documentos", icon: FileIcon },
   { label: "Usuários", href: "/usuarios", icon: SettingsIcon },
 ];
